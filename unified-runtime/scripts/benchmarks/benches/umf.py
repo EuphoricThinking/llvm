@@ -209,6 +209,7 @@ class GBenchPreloaded(GBench):
         results = []
         for row in reader:
             try:
+                print(row)
                 full_name = row[self.col_name]
                 pool, config = self.get_pool_and_config(full_name)
                 mean = self.get_mean(row)
