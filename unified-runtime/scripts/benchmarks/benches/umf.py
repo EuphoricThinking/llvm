@@ -209,7 +209,6 @@ class GBenchPreloaded(GBench):
         results = []
         for row in reader:
             try:
-                print(row)
                 full_name = row[self.col_name]
                 pool, config = self.get_pool_and_config(full_name)
                 mean = self.get_mean(row)
@@ -241,7 +240,7 @@ class GBenchJemalloc(GBenchGlibc):
 
     def extra_env_vars(self) -> dict:
         return {"LD_PRELOAD": "libjemalloc.so"}
-    
+
 class GBenchTbbProxy(GBenchGlibc):
     def __init__(self, bench):
         super().__init__(bench, replacing_lib="tbbProxy")
