@@ -21,8 +21,17 @@
  */
 
 #include <clc/clc.h>
+<<<<<<< HEAD
 #include <libspirv/spirv.h>
 
 #define __CLC_BUILTIN __spirv_ocl_sqrt
 #define __CLC_FUNCTION sqrt
 #include <clc/math/unary_builtin.inc>
+=======
+#include <clc/math/clc_sqrt.h>
+
+#define FUNCTION sqrt
+#define __CLC_BODY <clc/shared/unary_def.inc>
+
+#include <clc/math/gentype.inc>
+>>>>>>> 285b411e4635e8db2526d653488ee54dad2bff34
