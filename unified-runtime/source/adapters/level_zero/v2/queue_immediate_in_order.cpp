@@ -25,10 +25,8 @@ namespace v2 {
 
 wait_list_view ur_queue_immediate_in_order_t::getWaitListView(
     locked<ur_command_list_manager> &commandList,
-    const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents,
-    ur_event_handle_t additionalWaitEvent) {
-  return commandList->getWaitListView(phWaitEvents, numWaitEvents,
-                                      additionalWaitEvent);
+    const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents) {
+  return commandList->getWaitListView(phWaitEvents, numWaitEvents);
 }
 
 static int32_t getZeOrdinal(ur_device_handle_t hDevice) {
@@ -873,8 +871,7 @@ ur_result_t ur_queue_immediate_in_order_t::enqueueTimestampRecordingExp(
 ur_result_t ur_queue_immediate_in_order_t::enqueueGenericCommandListsExp(
     uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
     ur_event_handle_t *phEvent, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_command_t callerCommand,
-    ur_event_handle_t additionalWaitEvent) {
+    const ur_event_handle_t *phEventWaitList, ur_command_t callerCommand) {
   TRACK_SCOPE_LATENCY(
       "ur_queue_immediate_in_order_t::enqueueGenericCommandListsExp");
 
@@ -883,8 +880,7 @@ ur_result_t ur_queue_immediate_in_order_t::enqueueGenericCommandListsExp(
       getSignalEvent(commandListLocked, phEvent, callerCommand);
 
   auto [pWaitEvents, numWaitEvents] =
-      getWaitListView(commandListLocked, phEventWaitList, numEventsInWaitList,
-                      additionalWaitEvent);
+      getWaitListView(commandListLocked, phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
              (commandListLocked->getZeCommandList(), numCommandLists,
@@ -913,7 +909,7 @@ ur_result_t ur_queue_immediate_in_order_t::enqueueCommandBufferExp(
 
   UR_CALL(enqueueGenericCommandListsExp(
       1, &commandBufferCommandList, phEvent, numEventsInWaitList,
-      phEventWaitList, UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP, executionEvent));
+      phEventWaitList, UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP));
   UR_CALL(hCommandBuffer->registerExecutionEventUnlocked(*phEvent));
   if (internalEvent != nullptr) {
     internalEvent->release();
