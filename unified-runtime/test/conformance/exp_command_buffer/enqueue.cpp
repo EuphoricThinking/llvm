@@ -132,3 +132,24 @@ TEST_P(urEnqueueCommandBufferExpTest, SerializeOutofOrderQueue) {
     ASSERT_EQ(reference, Output[i]);
   }
 }
+
+TEST_P(urEnqueueCommandBufferExpTest, SerializeInOrderQueue) {
+  ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_order_queue, cmd_buf_handle,
+                                           0, nullptr, nullptr));
+  ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_order_queue, cmd_buf_handle,
+                                           0, nullptr, nullptr));
+
+  // Wait for both submissions to complete
+  ASSERT_SUCCESS(urQueueFinish(in_order_queue));
+
+  std::vector<uint32_t> Output(global_size);
+  ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, true, Output.data(),
+                                    device_ptr, allocation_size, 0, nullptr,
+                                    nullptr));
+
+  // Verify
+  const uint32_t reference = 2;
+  for (size_t i = 0; i < global_size; i++) {
+    ASSERT_EQ(reference, Output[i]);
+  }
+}
