@@ -45,6 +45,17 @@ struct urEnqueueCommandBufferExpTest
     ASSERT_SUCCESS(urEnqueueUSMFill(queue, device_ptr, sizeof(zero_pattern),
                                     &zero_pattern, allocation_size, 0, nullptr,
                                     nullptr));
+
+    std::vector<int> temp_val(buffer_size, 3);
+
+    for (int i = 0; i < num_copy_buffers; i++) {
+      ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst_buffers[i])));
+      ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src_buffers[i])));
+
+      ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src_buffers[i], temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
+    }
+
+
     ASSERT_SUCCESS(urQueueFinish(queue));
 
     // Create command-buffer with a single kernel that does "Ptr[i] += 1;"
@@ -53,6 +64,12 @@ struct urEnqueueCommandBufferExpTest
         cmd_buf_handle, kernel, n_dimensions, &global_offset, &global_size,
         nullptr, 0, nullptr, 0, nullptr, 0, nullptr, nullptr, nullptr,
         nullptr));
+
+
+    for (int i = 0; i < num_copy_buffers; i++) {
+       ASSERT_SUCCESS(urCommandBufferAppendUSMMemcpyExp(cmd_buf_handle, dst_buffers[i], src_buffers[i], buffer_size * sizeof(int), 0, nullptr, 0, nullptr, nullptr, nullptr, nullptr));
+    }
+
     ASSERT_SUCCESS(urCommandBufferFinalizeExp(cmd_buf_handle));
   }
 
@@ -69,6 +86,16 @@ struct urEnqueueCommandBufferExpTest
       EXPECT_SUCCESS(urUSMFree(context, device_ptr));
     }
 
+    for (int i = 0; i < num_copy_buffers; i++) {
+      if (dst_buffers[i]) {
+        EXPECT_SUCCESS(urUSMFree(context, dst_buffers[i]));
+      }
+
+      if (src_buffers[i]) {
+        EXPECT_SUCCESS(urUSMFree(context, src_buffers[i]));
+      }
+    }
+
     UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTest::TearDown());
   }
 
@@ -80,6 +107,11 @@ struct urEnqueueCommandBufferExpTest
   static constexpr size_t n_dimensions = 1;
   static constexpr size_t allocation_size = sizeof(uint32_t) * global_size;
   void *device_ptr = nullptr;
+
+  static constexpr int num_copy_buffers = 10;
+  static constexpr int buffer_size = 512;
+  int* dst_buffers[num_copy_buffers];
+  int* src_buffers[num_copy_buffers];
 };
 
 UUR_INSTANTIATE_DEVICE_TEST_SUITE(urEnqueueCommandBufferExpTest);
@@ -131,6 +163,28 @@ TEST_P(urEnqueueCommandBufferExpTest, SerializeOutofOrderQueue) {
 
   // Verify
   const uint32_t reference = 2;
+  for (size_t i = 0; i < global_size; i++) {
+    ASSERT_EQ(reference, Output[i]);
+  }
+}
+
+TEST_P(urEnqueueCommandBufferExpTest, SerializeInOrderQueue) {
+  const int iterations = 5;
+  for (int i = 0; i < iterations; i++) {
+    ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_order_queue, cmd_buf_handle,
+                                           0, nullptr, nullptr));
+  }
+
+  // Wait for both submissions to complete
+  ASSERT_SUCCESS(urQueueFinish(in_order_queue));
+
+  std::vector<uint32_t> Output(global_size);
+  ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, true, Output.data(),
+                                    device_ptr, allocation_size, 0, nullptr,
+                                    nullptr));
+
+  // Verify
+  const uint32_t reference = iterations;
   for (size_t i = 0; i < global_size; i++) {
     ASSERT_EQ(reference, Output[i]);
   }
