@@ -99,7 +99,7 @@ struct urCommandBufferExpExecutionTest : uur::urKernelExecutionTest {
 
     // in-order command buffer
     ur_exp_command_buffer_desc_t desc{UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-                                      nullptr, false, false /* WAS: false */, false};
+                                      nullptr, false, true /* WAS: false */, false};
     ASSERT_SUCCESS(
         urCommandBufferCreateExp(context, device, &desc, &cmd_buf_handle));
     ASSERT_NE(cmd_buf_handle, nullptr);
