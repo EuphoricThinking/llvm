@@ -45,24 +45,24 @@ struct urEnqueueCommandBufferExpTest
 
     const int num_copy_buffers = 8;
     const int buffer_size = 512;
-    // int* dst_buffers[num_copy_buffers];
-    // int* src_buffers[num_copy_buffers];
-    int* src;
-    int* dst;
+    int* dst_buffers[num_copy_buffers];
+    int* src_buffers[num_copy_buffers];
+    // int* src;
+    // int* dst;
 
     std::vector<int> temp_val(buffer_size, 3);
 
-    ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst)));
+    // ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst)));
       
-    ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src)));
-    ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src, temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
+    // ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src)));
+    // ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src, temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
 
-    // for (int i = 0; i < num_copy_buffers; i++) {
-    //   ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst_buffers[i])));
-    //   ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src_buffers[i])));
+    for (int i = 0; i < num_copy_buffers; i++) {
+      ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst_buffers[i])));
+      ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src_buffers[i])));
 
-    //   ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src_buffers[i], temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
-    // }
+      ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src_buffers[i], temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
+    }
 
 
     ASSERT_SUCCESS(urQueueFinish(queue));
@@ -75,9 +75,9 @@ struct urEnqueueCommandBufferExpTest
         nullptr));
 
 
-    // for (int i = 0; i < num_copy_buffers; i++) {
-    //    ASSERT_SUCCESS(urCommandBufferAppendUSMMemcpyExp(cmd_buf_handle, dst_buffers[i], src_buffers[i], buffer_size * sizeof(int), 0, nullptr, 0, nullptr, nullptr, nullptr, nullptr));
-    // }
+    for (int i = 0; i < num_copy_buffers; i++) {
+       ASSERT_SUCCESS(urCommandBufferAppendUSMMemcpyExp(cmd_buf_handle, dst_buffers[i], src_buffers[i], buffer_size * sizeof(int), 0, nullptr, 0, nullptr, nullptr, nullptr, nullptr));
+    }
 
     ASSERT_SUCCESS(urCommandBufferFinalizeExp(cmd_buf_handle));
   }
