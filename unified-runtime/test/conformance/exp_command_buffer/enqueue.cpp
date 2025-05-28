@@ -24,9 +24,9 @@ struct urEnqueueCommandBufferExpTest
 
     // Create an in-order queue
     ur_queue_properties_t queue_properties = {
-        UR_STRUCTURE_TYPE_QUEUE_PROPERTIES, nullptr, 0};
+        UR_STRUCTURE_TYPE_QUEUE_PROPERTIES, nullptr, GetParam()}; //0};
     ASSERT_SUCCESS(
-        urQueueCreate(context, device, &queue_properties, &in_order_queue));
+        urQueueCreate(context, device, &queue_properties, &in_or_out_of_order_queue));
 
     // Create an out-of-order queue
     queue_properties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
@@ -49,7 +49,7 @@ struct urEnqueueCommandBufferExpTest
       ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(dst_buffers[i])));
       ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr, buffer_size * sizeof(int), (void**) &(src_buffers[i])));
 
-      ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, false, src_buffers[i], temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
+      ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_or_out_of_order_queue, false, src_buffers[i], temp_val.data(), buffer_size * sizeof(int), 0, nullptr, nullptr));
     }
 
 
@@ -75,9 +75,9 @@ struct urEnqueueCommandBufferExpTest
       EXPECT_SUCCESS(urQueueRelease(in_order_queue));
     }
 
-    if (out_of_order_queue) {
-      EXPECT_SUCCESS(urQueueRelease(out_of_order_queue));
-    }
+    // if (out_of_order_queue) {
+    //   EXPECT_SUCCESS(urQueueRelease(out_of_order_queue));
+    // }
 
     if (device_ptr) {
       EXPECT_SUCCESS(urUSMFree(context, device_ptr));
@@ -96,8 +96,8 @@ struct urEnqueueCommandBufferExpTest
     UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTest::TearDown());
   }
 
-  ur_queue_handle_t in_order_queue = nullptr;
-  ur_queue_handle_t out_of_order_queue = nullptr;
+  ur_queue_handle_t in_or_out_of_order_queue = nullptr;
+  // ur_queue_handle_t out_of_order_queue = nullptr;
 
   static constexpr size_t global_size = 16;
   static constexpr size_t global_offset = 0;
@@ -111,24 +111,32 @@ struct urEnqueueCommandBufferExpTest
   int* src_buffers[num_copy_buffers];
 };
 
-UUR_INSTANTIATE_DEVICE_TEST_SUITE(urEnqueueCommandBufferExpTest);
+// UUR_INSTANTIATE_DEVICE_TEST_SUITE(urEnqueueCommandBufferExpTest);
+UUR_DEVICE_TEST_SUITE_WITH_PARAM(urEnqueueCommandBufferExpTest, testing::Values({0, UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE}), [](const ::testing::TestParamInfo<ur_platform_handle_t> &info) {         \
+        std::string queue_type = std::get<1>(info.param) == 0 ? "InOrderQueue" : "OutOfOrderQueue";
+        return queue_type.append(uur::GetPlatformNameWithID(std::get<0>(info.param)));                         \
+      });
 
 // Tests that the same command-buffer submitted across different in-order
 // queues has an implicit dependency on first submission
 TEST_P(urEnqueueCommandBufferExpTest, SerializeAcrossQueues) {
   // Execute command-buffer to first in-order queue (created by parent
   // urQueueTest fixture)
+  if (GetParam() == UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+    GTEST_SKIP();
+  }
+
   ASSERT_SUCCESS(
       urEnqueueCommandBufferExp(queue, cmd_buf_handle, 0, nullptr, nullptr));
 
   // Execute command-buffer to second in-order queue, should have implicit
   // dependency on first submission.
-  ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_order_queue, cmd_buf_handle, 0,
+  ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_or_out_of_order_queue, cmd_buf_handle, 0,
                                            nullptr, nullptr));
 
   // Wait for both submissions to complete
   ASSERT_SUCCESS(urQueueFlush(queue));
-  ASSERT_SUCCESS(urQueueFinish(in_order_queue));
+  ASSERT_SUCCESS(urQueueFinish(in_or_out_of_order_queue));
 
   std::vector<uint32_t> Output(global_size);
   ASSERT_SUCCESS(urEnqueueUSMMemcpy(queue, false, Output.data(), device_ptr,
@@ -142,41 +150,41 @@ TEST_P(urEnqueueCommandBufferExpTest, SerializeAcrossQueues) {
   }
 }
 
-// Tests that submitting a command-buffer twice to an out-of-order queue
-// relying on implicit serialization semantics for dependencies.
-TEST_P(urEnqueueCommandBufferExpTest, SerializeOutofOrderQueue) {
-  ASSERT_SUCCESS(urEnqueueCommandBufferExp(out_of_order_queue, cmd_buf_handle,
-                                           0, nullptr, nullptr));
-  ASSERT_SUCCESS(urEnqueueCommandBufferExp(out_of_order_queue, cmd_buf_handle,
-                                           0, nullptr, nullptr));
+// // Tests that submitting a command-buffer twice to an out-of-order queue
+// // relying on implicit serialization semantics for dependencies.
+// TEST_P(urEnqueueCommandBufferExpTest, SerializeOutofOrderQueue) {
+//   ASSERT_SUCCESS(urEnqueueCommandBufferExp(out_of_order_queue, cmd_buf_handle,
+//                                            0, nullptr, nullptr));
+//   ASSERT_SUCCESS(urEnqueueCommandBufferExp(out_of_order_queue, cmd_buf_handle,
+//                                            0, nullptr, nullptr));
 
-  // Wait for both submissions to complete
-  ASSERT_SUCCESS(urQueueFinish(out_of_order_queue));
+//   // Wait for both submissions to complete
+//   ASSERT_SUCCESS(urQueueFinish(out_of_order_queue));
 
-  std::vector<uint32_t> Output(global_size);
-  ASSERT_SUCCESS(urEnqueueUSMMemcpy(out_of_order_queue, true, Output.data(),
-                                    device_ptr, allocation_size, 0, nullptr,
-                                    nullptr));
+//   std::vector<uint32_t> Output(global_size);
+//   ASSERT_SUCCESS(urEnqueueUSMMemcpy(out_of_order_queue, true, Output.data(),
+//                                     device_ptr, allocation_size, 0, nullptr,
+//                                     nullptr));
 
-  // Verify
-  const uint32_t reference = 2;
-  for (size_t i = 0; i < global_size; i++) {
-    ASSERT_EQ(reference, Output[i]);
-  }
-}
+//   // Verify
+//   const uint32_t reference = 2;
+//   for (size_t i = 0; i < global_size; i++) {
+//     ASSERT_EQ(reference, Output[i]);
+//   }
+// }
 
-TEST_P(urEnqueueCommandBufferExpTest, SerializeInOrderQueue) {
+TEST_P(urEnqueueCommandBufferExpTest, SerializeInOrOutOfOrderQueue) {
   const int iterations = 5;
   for (int i = 0; i < iterations; i++) {
-    ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_order_queue, cmd_buf_handle,
+    ASSERT_SUCCESS(urEnqueueCommandBufferExp(in_or_out_of_order_queue, cmd_buf_handle,
                                            0, nullptr, nullptr));
   }
 
   // Wait for both submissions to complete
-  ASSERT_SUCCESS(urQueueFinish(in_order_queue));
+  ASSERT_SUCCESS(urQueueFinish(in_or_out_of_order_queue));
 
   std::vector<uint32_t> Output(global_size);
-  ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_order_queue, true, Output.data(),
+  ASSERT_SUCCESS(urEnqueueUSMMemcpy(in_or_out_of_order_queue, true, Output.data(),
                                     device_ptr, allocation_size, 0, nullptr,
                                     nullptr));
 
