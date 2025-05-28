@@ -8,6 +8,8 @@
 #include <array>
 #include <cstring>
 
+// using QueueType = uint32_t; //std::tuple<ur_platform_handle_t, uint32_t>;
+
 // Tests that adapter implementation of urEnqueueCommandBufferExp serializes
 // submissions of the same UR command-buffer object with respect to previous
 // submissions.
@@ -17,22 +19,23 @@
 // enqueue_update.cpp test for a test verifying the order of submissions, as
 // the input/output to the kernels can be modified between the submissions.
 struct urEnqueueCommandBufferExpTest
-    : uur::command_buffer::urCommandBufferExpExecutionTest {
+    : uur::command_buffer::urCommandBufferExpTestWithParam<ur_queue_flags_t> {
   virtual void SetUp() override {
     program_name = "increment";
-    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTest::SetUp());
+    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpTestWithParam::SetUp());
 
     // Create an in-order queue
+    queue_type = std::get<1>(GetParam());
     ur_queue_properties_t queue_properties = {
-        UR_STRUCTURE_TYPE_QUEUE_PROPERTIES, nullptr, GetParam()}; //0};
+        UR_STRUCTURE_TYPE_QUEUE_PROPERTIES, nullptr, queue_type}; //GetParam()}; //0};
     ASSERT_SUCCESS(
         urQueueCreate(context, device, &queue_properties, &in_or_out_of_order_queue));
 
-    // Create an out-of-order queue
-    queue_properties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    ASSERT_SUCCESS(
-        urQueueCreate(context, device, &queue_properties, &out_of_order_queue));
-    ASSERT_NE(out_of_order_queue, nullptr);
+    // // Create an out-of-order queue
+    // queue_properties.flags = UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    // ASSERT_SUCCESS(
+    //     urQueueCreate(context, device, &queue_properties, &out_of_order_queue));
+    // ASSERT_NE(out_of_order_queue, nullptr);
 
     ASSERT_SUCCESS(urUSMDeviceAlloc(context, device, nullptr, nullptr,
                                     allocation_size, &device_ptr));
@@ -71,8 +74,8 @@ struct urEnqueueCommandBufferExpTest
   }
 
   virtual void TearDown() override {
-    if (in_order_queue) {
-      EXPECT_SUCCESS(urQueueRelease(in_order_queue));
+    if (in_or_out_of_order_queue) {
+      EXPECT_SUCCESS(urQueueRelease(in_or_out_of_order_queue));
     }
 
     // if (out_of_order_queue) {
@@ -93,10 +96,12 @@ struct urEnqueueCommandBufferExpTest
       }
     }
 
-    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTest::TearDown());
+    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpTestWithParam::TearDown());
   }
 
   ur_queue_handle_t in_or_out_of_order_queue = nullptr;
+  ur_queue_flags_t queue_type; // = 0;
+
   // ur_queue_handle_t out_of_order_queue = nullptr;
 
   static constexpr size_t global_size = 16;
@@ -111,19 +116,43 @@ struct urEnqueueCommandBufferExpTest
   int* src_buffers[num_copy_buffers];
 };
 
+
+std::string deviceTestWithQueueTypePrinter(
+    const ::testing::TestParamInfo<std::tuple<uur::DeviceTuple, ur_queue_flags_t>> &info) {
+  auto device = std::get<0>(info.param).device;
+  auto queue_type = std::get<1>(info.param);
+
+  std::stringstream ss;
+
+  switch (queue_type) {
+    case 0:
+      ss << "InOrderQueue";
+      break;
+
+      // change to if and bitwise and?
+    case UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE:
+      ss << "OutOfOrderQueue";
+      break;
+
+    default:
+      ss << "UnspecifiedQueueType" << queue_type;
+  }
+
+
+  return uur::GetPlatformAndDeviceName(device) + "__" +
+         uur::GTestSanitizeString(ss.str());
+}
+
 // UUR_INSTANTIATE_DEVICE_TEST_SUITE(urEnqueueCommandBufferExpTest);
-UUR_DEVICE_TEST_SUITE_WITH_PARAM(urEnqueueCommandBufferExpTest, testing::Values({0, UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE}), [](const ::testing::TestParamInfo<ur_platform_handle_t> &info) {         \
-        std::string queue_type = std::get<1>(info.param) == 0 ? "InOrderQueue" : "OutOfOrderQueue";
-        return queue_type.append(uur::GetPlatformNameWithID(std::get<0>(info.param)));                         \
-      });
+UUR_DEVICE_TEST_SUITE_WITH_PARAM(urEnqueueCommandBufferExpTest, testing::Values(0, UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE), deviceTestWithQueueTypePrinter);
 
 // Tests that the same command-buffer submitted across different in-order
 // queues has an implicit dependency on first submission
 TEST_P(urEnqueueCommandBufferExpTest, SerializeAcrossQueues) {
   // Execute command-buffer to first in-order queue (created by parent
   // urQueueTest fixture)
-  if (GetParam() == UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
-    GTEST_SKIP();
+  if (queue_type == UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+    GTEST_SKIP() << "unwantedoutoforder";
   }
 
   ASSERT_SUCCESS(
