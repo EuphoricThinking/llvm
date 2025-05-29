@@ -8,8 +8,6 @@
 #include <array>
 #include <cstring>
 
-// using QueueType = uint32_t; //std::tuple<ur_platform_handle_t, uint32_t>;
-
 // Tests that adapter implementation of urEnqueueCommandBufferExp serializes
 // submissions of the same UR command-buffer object with respect to previous
 // submissions.
