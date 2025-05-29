@@ -17,10 +17,10 @@
 // enqueue_update.cpp test for a test verifying the order of submissions, as
 // the input/output to the kernels can be modified between the submissions.
 struct urEnqueueCommandBufferExpTest
-    : uur::command_buffer::urCommandBufferExpTestWithParam<ur_queue_flags_t> {
+    : uur::command_buffer::urCommandBufferExpExecutionTestWithParam<ur_queue_flags_t> {
   virtual void SetUp() override {
     program_name = "increment";
-    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpTestWithParam::SetUp());
+    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTestWithParam::SetUp());
 
     // Create an in-order queue
     queue_type = std::get<1>(GetParam());
@@ -94,7 +94,7 @@ struct urEnqueueCommandBufferExpTest
       }
     }
 
-    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpTestWithParam::TearDown());
+    UUR_RETURN_ON_FATAL_FAILURE(urCommandBufferExpExecutionTestWithParam::TearDown());
   }
 
   ur_queue_handle_t in_or_out_of_order_queue = nullptr;
