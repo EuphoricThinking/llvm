@@ -32,7 +32,7 @@ public:
   event_pool(ur_context_handle_t hContext,
              std::unique_ptr<event_provider> Provider)
       : hContext(hContext), provider(std::move(Provider)),
-        mutex(std::make_unique<std::mutex>()) {};
+        mutex(std::make_unique<ur_mutex>()) {};
 
   event_pool(event_pool &&other) = default;
   event_pool &operator=(event_pool &&other) = default;
@@ -58,7 +58,7 @@ private:
   std::deque<ur_event_handle_t_> events;
   std::vector<ur_event_handle_t> freelist;
 
-  std::unique_ptr<std::mutex> mutex;
+  std::unique_ptr<ur_mutex> mutex;
 };
 
 } // namespace v2
