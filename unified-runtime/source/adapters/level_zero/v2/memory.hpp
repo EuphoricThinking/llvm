@@ -19,7 +19,7 @@
 #include "../image_common.hpp"
 #include "command_list_manager.hpp"
 #include "common.hpp"
-#include "lockable.hpp"
+// #include "lockable.hpp"
 
 using usm_unique_ptr_t = std::unique_ptr<void, std::function<void(void *)>>;
 
