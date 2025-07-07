@@ -10,10 +10,12 @@
  *
  */
 
+#include "adapters/level_zero/v2/queue_batched.hpp"
 #include "logger/ur_logger.hpp"
 #include "queue_api.hpp"
 #include "queue_handle.hpp"
 #include "queue_immediate_in_order.hpp"
+#include "command_buffer.hpp"
 #include "ur_api.h"
 
 namespace v2 {
@@ -78,6 +80,37 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
             v2::eventFlagsFromQueueFlags(flags), flags);
   } else if (flags & UR_QUEUE_FLAG_SUBMISSION_BATCHED) {
     // create a new queue type
+    // first, create command buffer
+    // second, pass this command buffer
+    ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+    
+    ur_exp_command_buffer_desc_t cmdBufferDesc = {
+        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+        nullptr,     // pNext
+        false,       // isUpdatable
+        true,     // isInOrder
+        (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+    };
+
+     ur::level_zero::urCommandBufferCreateExp(
+        hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
+    // checkImmediateAppendSupport(hContext);
+    // using queue_group_type = ur_device_handle_t_::queue_group_info_t::type;
+    // uint32_t queueGroupOrdinal =
+    //     hDevice->QueueGroup[queue_group_type::Compute].ZeOrdinal;
+    // v2::command_list_desc_t listDesc;
+    // listDesc.IsInOrder = true;
+    // listDesc.Ordinal = queueGroupOrdinal;
+    // listDesc.CopyOffloadEnable = true;
+    // listDesc.Mutable = false;
+    // v2::raii::command_list_unique_handle zeCommandList =
+    //     hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+    //                                                        listDesc);
+
+    *phQueue = ur_queue_handle_t_::create<v2::ur_queue_batched_t>(
+        hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
+        zeIndex, v2::eventFlagsFromQueueFlags(flags), flags, std::move(cmdBuffer));
+
   }
   else {
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_immediate_in_order_t>(
