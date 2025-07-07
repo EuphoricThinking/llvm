@@ -14,6 +14,7 @@
 #include "queue_api.hpp"
 #include "queue_handle.hpp"
 #include "queue_immediate_in_order.hpp"
+#include "ur_api.h"
 
 namespace v2 {
 
@@ -75,10 +76,15 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
             hContext, hDevice, v2::getZeOrdinal(hDevice),
             v2::getZePriority(flags), zeIndex,
             v2::eventFlagsFromQueueFlags(flags), flags);
-  } else {
+  } else if (flags & UR_QUEUE_FLAG_SUBMISSION_BATCHED) {
+    // create a new queue type
+  }
+  else {
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_immediate_in_order_t>(
         hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
         zeIndex, v2::eventFlagsFromQueueFlags(flags), flags);
+
+  
   }
 
   return UR_RESULT_SUCCESS;
