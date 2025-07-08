@@ -72,7 +72,8 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
 
   auto zeIndex = v2::getZeIndex(pProperties);
 
-  if (((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) && ((flags & UR_QUEUE_FLAG_SUBMISSION_BATCHED) == 0)) {
+  // if (((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) && ((flags & UR_QUEUE_FLAG_SUBMISSION_BATCHED) == 0)) {
+  if ((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) {
     *phQueue =
         ur_queue_handle_t_::create<v2::ur_queue_immediate_out_of_order_t>(
             hContext, hDevice, v2::getZeOrdinal(hDevice),
@@ -88,7 +89,8 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
         UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
         nullptr,     // pNext
         false,       // isUpdatable
-        (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
+        true, // isInOrder
+        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
         (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
     };
 
