@@ -45,5 +45,14 @@ ur_queue_batched_t::ur_queue_batched_t(ur_context_handle_t hContext,
                     commandBuffer(std::move(cmdBuffer))
                 {}
 
+ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
+      ur_kernel_handle_t hKernel, uint32_t workDim,
+      const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
+      const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
+      const ur_kernel_launch_property_t *launchPropList,
+      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+      ur_event_handle_t *phEvent) {
+        return ur::level_zero::urCommandBufferAppendKernelLaunchExp(commandBuffer, hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0 /* numKernelAlternatives */, nullptr /* phKernelAlternatives */, 0 /* numSyncPointsInWaitList */, nullptr /* syncPointWaitList */, 0 /*numEventsInWaitList*/, nullptr /* *eventWaitList */, nullptr /* retSyncPoint */, nullptr /* event */, nullptr /* command - not updatable buffer */);
+      }
 
 } // namespace v2

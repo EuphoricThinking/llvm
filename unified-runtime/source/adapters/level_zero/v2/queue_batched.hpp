@@ -63,13 +63,13 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
       const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendKernelLaunch(
-        hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-        numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-        phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
-  }
+      ur_event_handle_t *phEvent) override; // {
+//     return commandListManager.lock()->appendKernelLaunch(
+//         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+//         numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
+//         phEventWaitList,
+//         createEventIfRequested(eventPool.get(), phEvent, this));
+//   }
   ur_result_t
   enqueueEventsWaitWithBarrier(uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
