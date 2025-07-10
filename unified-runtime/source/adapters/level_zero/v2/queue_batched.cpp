@@ -20,6 +20,7 @@
 
 #include "../program.hpp"
 #include "../ur_interface_loader.hpp"
+#include "ur_api.h"
 #include <cstddef>
 
 namespace v2 {
@@ -52,7 +53,16 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) {
-        return ur::level_zero::urCommandBufferAppendKernelLaunchExp(commandBuffer, hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0 /* numKernelAlternatives */, nullptr /* phKernelAlternatives */, 0 /* numSyncPointsInWaitList */, nullptr /* syncPointWaitList */, 0 /*numEventsInWaitList*/, nullptr /* *eventWaitList */, nullptr /* retSyncPoint */, nullptr /* event */, nullptr /* command - not updatable buffer */);
+      //   return ur::level_zero::urCommandBufferAppendKernelLaunchExp(commandBuffer, hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0 /* numKernelAlternatives */, nullptr /* phKernelAlternatives */, 0 /* numSyncPointsInWaitList */, nullptr /* syncPointWaitList */, 0 /*numEventsInWaitList*/, nullptr /* *eventWaitList */, nullptr /* retSyncPoint */, nullptr /* event */, nullptr /* command - not updatable buffer */);
+      // }
+      auto commandListLocked = commandBuffer->commandListManager.lock();
+
+      UR_CALL(commandListLocked->appendKernelLaunch(
+      hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, numPropsInLaunchPropList,
+      launchPropList, numEventsInWaitList, phEventWaitList,
+      createEventIfRequested(eventPool.get(), phEvent, this)));
+
+      return UR_RESULT_SUCCESS;
       }
 
 } // namespace v2
