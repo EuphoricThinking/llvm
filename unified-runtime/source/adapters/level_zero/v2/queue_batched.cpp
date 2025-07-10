@@ -87,4 +87,13 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 
   return UR_RESULT_SUCCESS;
 }
+
+ur_queue_batched_t::~ur_queue_batched_t() {
+try {
+    urCommandBufferReleaseExp(commandBuffer);
+    UR_CALL_THROWS(queueFinish());
+  } catch (...) {
+    // Ignore errors during destruction
+  }
+}
 } // namespace v2
