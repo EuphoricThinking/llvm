@@ -65,4 +65,26 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       return UR_RESULT_SUCCESS;
       }
 
+
+ur_result_t ur_queue_batched_t::queueFinish() {
+    urCommandBufferFinalizeExp(
+        commandBuffer);
+    auto lockedCommandListManager = commandListManager.lock();
+    lockedCommandListManager->appendCommandBufferExp(
+    commandBuffer, 0, nullptr,
+    createEventAndRetain(eventPool.get(), nullptr, this));
+
+    ZE2UR_CALL(zeCommandListHostSynchronize,
+             (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
+
+  hContext->getAsyncPool()->cleanupPoolsForQueue(this);
+  hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
+    hPool->cleanupPoolsForQueue(this);
+    return true;
+  });
+
+  UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
+
+  return UR_RESULT_SUCCESS;
+}
 } // namespace v2
