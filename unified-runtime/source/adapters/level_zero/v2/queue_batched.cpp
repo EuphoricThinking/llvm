@@ -67,8 +67,10 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 
 
 ur_result_t ur_queue_batched_t::queueFinish() {
-    urCommandBufferFinalizeExp(
-        commandBuffer);
+  try {
+    // urCommandBufferFinalizeExp(
+    //     commandBuffer);
+    UR_CALL(commandBuffer->finalizeCommandBuffer());
     auto lockedCommandListManager = commandListManager.lock();
     lockedCommandListManager->appendCommandBufferExp(
     commandBuffer, 0, nullptr,
@@ -87,13 +89,101 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 
   return UR_RESULT_SUCCESS;
 }
+catch (...) {
+  return exceptionToResult(std::current_exception());
+}
+}
 
 ur_queue_batched_t::~ur_queue_batched_t() {
 try {
-    urCommandBufferReleaseExp(commandBuffer);
+    // urCommandBufferReleaseExp(commandBuffer);
+    if (commandBuffer->RefCount.release()) {
+      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+      ZE2UR_CALL_THROWS(zeEventHostSynchronize,
+               (executionEvent->getZeEvent(), UINT64_MAX));
+      }
+    delete commandBuffer;
+    }
+
     UR_CALL_THROWS(queueFinish());
   } catch (...) {
     // Ignore errors during destruction
   }
 }
+
+ur_result_t
+ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
+                                            size_t propSize, void *pPropValue,
+                                            size_t *pPropSizeRet) {
+  UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
+  // TODO: consider support for queue properties and size
+  switch ((uint32_t)propName) { // cast to avoid warnings on EXT enum values
+  case UR_QUEUE_INFO_CONTEXT:
+    return ReturnValue(hContext);
+  case UR_QUEUE_INFO_DEVICE:
+    return ReturnValue(hDevice);
+  case UR_QUEUE_INFO_REFERENCE_COUNT:
+    return ReturnValue(uint32_t{RefCount.getCount()});
+  case UR_QUEUE_INFO_FLAGS:
+    return ReturnValue(flags);
+  case UR_QUEUE_INFO_SIZE:
+  case UR_QUEUE_INFO_DEVICE_DEFAULT:
+    return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+  case UR_QUEUE_INFO_EMPTY: {
+    auto status = ZE_CALL_NOCHECK(
+        zeCommandListHostSynchronize,
+        (commandListManager.get_no_lock()->getZeCommandList(), 0));
+    if (status == ZE_RESULT_SUCCESS) {
+      return ReturnValue(true);
+    } else if (status == ZE_RESULT_NOT_READY) {
+      return ReturnValue(false);
+    } else {
+      return ze2urResult(status);
+    }
+  }
+  default:
+    UR_LOG(ERR,
+           "Unsupported ParamName in urQueueGetInfo: "
+           "ParamName=ParamName={}(0x{})",
+           propName, logger::toHex(propName));
+    return UR_RESULT_ERROR_INVALID_VALUE;
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+
+ur_result_t ur_queue_batched_t::queueGetNativeHandle(
+    ur_queue_native_desc_t * /*pDesc*/, ur_native_handle_t *phNativeQueue) {
+  *phNativeQueue = reinterpret_cast<ur_native_handle_t>(
+      commandListManager.get_no_lock()->getZeCommandList());
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::queueFlush() {
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  TRACK_SCOPE_LATENCY(
+      "ur_queue_batched_t::enqueueEventsWaitWithBarrier");
+  // For in-order queue we don't need a real barrier, just wait for
+  // requested events in potentially different queues and add a "barrier"
+  // event signal because it is already guaranteed that previous commands
+  // in this queue are completed when the signal is started. However, we do
+  // need to use barrier if profiling is enabled: see
+  // zeCommandListAppendWaitOnEvents
+  if ((flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0) {
+    return commandListManager.lock()->appendEventsWaitWithBarrier(
+        numEventsInWaitList, phEventWaitList,
+        createEventIfRequested(eventPool.get(), phEvent, this));
+  } else {
+    return commandListManager.lock()->appendEventsWait(
+        numEventsInWaitList, phEventWaitList,
+        createEventIfRequested(eventPool.get(), phEvent, this));
+  }
+}
+
 } // namespace v2
