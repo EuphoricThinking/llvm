@@ -147,9 +147,25 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
                                     const void *pSrc,
                                     uint32_t numEventsInWaitList,
                                     const ur_event_handle_t *phEventWaitList,
-                                    ur_event_handle_t *phEvent) {
+                                    ur_event_handle_t *phEvent) 
+                                      try {
 
+  // the same issue as in urCommandBufferAppendKernelLaunchExp
+  // sync mechanic can be ignored, because all lists are in-order
+  // Responsibility of UMD to offload to copy engine
+  auto commandListLocked = commandBuffer->commandListManager.lock();
+  // auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
+  //     pSyncPointWaitList, numSyncPointsInWaitList);
+
+  UR_CALL(commandListLocked->appendMemBufferWrite(
+      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+      phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
+
+  return UR_RESULT_SUCCESS;
+} catch (...) {
+  return exceptionToResult(std::current_exception());
 }
+
 
 ur_result_t
 ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
