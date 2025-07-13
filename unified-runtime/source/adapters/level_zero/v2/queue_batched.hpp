@@ -95,24 +95,26 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
                                    size_t offset, size_t size, void *pDst,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferRead(
-        hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
-        phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
-  }
+                                   ur_event_handle_t *phEvent) override;
+//                                     {
+//     return commandListManager.lock()->appendMemBufferRead(
+//         hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
+//         phEventWaitList,
+//         createEventIfRequested(eventPool.get(), phEvent, this));
+//   }
 
   ur_result_t enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
                                     size_t offset, size_t size,
                                     const void *pSrc,
                                     uint32_t numEventsInWaitList,
                                     const ur_event_handle_t *phEventWaitList,
-                                    ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferWrite(
-        hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
-        phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
-  }
+                                    ur_event_handle_t *phEvent) override;
+//                                      {
+//     return commandListManager.lock()->appendMemBufferWrite(
+//         hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
+//         phEventWaitList,
+//         createEventIfRequested(eventPool.get(), phEvent, this));
+//   }
 
   ur_result_t enqueueMemBufferReadRect(
       ur_mem_handle_t hBuffer, bool blockingRead, ur_rect_offset_t bufferOrigin,

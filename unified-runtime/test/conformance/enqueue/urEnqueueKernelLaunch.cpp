@@ -24,7 +24,6 @@ UUR_INSTANTIATE_DEVICE_TEST_SUITE(urEnqueueKernelLaunchNoArgs3DTest);
 struct urEnqueueKernelLaunchTest : uur::urKernelExecutionTest {
   void SetUp() override {
     program_name = "fill";
-    ASSERT_EQ(true, false) << "NOT ENTERED\n";
     UUR_RETURN_ON_FATAL_FAILURE(urKernelExecutionTest::SetUp());
   }
 

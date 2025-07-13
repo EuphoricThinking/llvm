@@ -1636,7 +1636,6 @@ struct urKernelExecutionTestWithParam : urBaseKernelExecutionTestWithParam<T> {
 struct urKernelExecutionTest : urBaseKernelExecutionTest {
   void SetUp() override {
     UUR_RETURN_ON_FATAL_FAILURE(urBaseKernelExecutionTest::SetUp());
-    ASSERT_EQ(true, false) << "kernel exec\n";
     Build();
   }
 };

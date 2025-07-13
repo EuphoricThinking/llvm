@@ -121,6 +121,37 @@ try {
 }
 
 ur_result_t
+ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
+                                   size_t offset, size_t size, void *pDst,
+                                   uint32_t numEventsInWaitList,
+                                   const ur_event_handle_t *phEventWaitList,
+                                   ur_event_handle_t *phEvent) {
+  try {
+auto commandListLocked = commandBuffer->commandListManager.lock();
+  // auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
+  //     pSyncPointWaitList, numSyncPointsInWaitList);
+
+  UR_CALL(commandListLocked->appendMemBufferRead(
+      hBuffer, false, offset, size, pDst, numEventsInWaitList,
+      phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
+
+  return UR_RESULT_SUCCESS;
+} catch (...) {
+  return exceptionToResult(std::current_exception());
+}
+}
+
+ur_result_t
+ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
+                                    size_t offset, size_t size,
+                                    const void *pSrc,
+                                    uint32_t numEventsInWaitList,
+                                    const ur_event_handle_t *phEventWaitList,
+                                    ur_event_handle_t *phEvent) {
+
+}
+
+ur_result_t
 ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
                                             size_t propSize, void *pPropValue,
                                             size_t *pPropSizeRet) {
