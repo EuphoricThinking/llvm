@@ -111,7 +111,7 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
 
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_batched_t>(
         hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
-        zeIndex, v2::eventFlagsFromQueueFlags(flags), flags, std::move(cmdBuffer));
+        zeIndex, v2::eventFlagsFromQueueFlags(flags), flags, cmdBuffer); //std::move(cmdBuffer));
 
   }
   else {

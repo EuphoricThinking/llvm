@@ -43,7 +43,8 @@ ur_queue_batched_t::ur_queue_batched_t(ur_context_handle_t hContext,
       flags(flags),
       eventPool(hContext->getEventPoolCache(PoolCacheType::Immediate)
                     .borrow(hDevice->Id.value(), eventFlags)),
-                    commandBuffer(std::move(cmdBuffer))
+                    // commandBuffer(std::move(cmdBuffer))
+                    commandBuffer(cmdBuffer)
                 {}
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
@@ -55,6 +56,12 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       ur_event_handle_t *phEvent) {
       //   return ur::level_zero::urCommandBufferAppendKernelLaunchExp(commandBuffer, hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0 /* numKernelAlternatives */, nullptr /* phKernelAlternatives */, 0 /* numSyncPointsInWaitList */, nullptr /* syncPointWaitList */, 0 /*numEventsInWaitList*/, nullptr /* *eventWaitList */, nullptr /* retSyncPoint */, nullptr /* event */, nullptr /* command - not updatable buffer */);
       // }
+      //  return commandListManager.lock()->appendKernelLaunch(
+      //   hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+      //   numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
+      //   phEventWaitList,
+      //   createEventIfRequested(eventPool.get(), phEvent, this));
+
       auto commandListLocked = commandBuffer->commandListManager.lock();
 
       UR_CALL(commandListLocked->appendKernelLaunch(
@@ -71,6 +78,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
     // urCommandBufferFinalizeExp(
     //     commandBuffer);
     UR_CALL(commandBuffer->finalizeCommandBuffer());
+
     auto lockedCommandListManager = commandListManager.lock();
     lockedCommandListManager->appendCommandBufferExp(
     commandBuffer, 0, nullptr,
@@ -96,16 +104,17 @@ catch (...) {
 
 ur_queue_batched_t::~ur_queue_batched_t() {
 try {
-    // urCommandBufferReleaseExp(commandBuffer);
-    if (commandBuffer->RefCount.release()) {
-      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
-      ZE2UR_CALL_THROWS(zeEventHostSynchronize,
-               (executionEvent->getZeEvent(), UINT64_MAX));
-      }
-    delete commandBuffer;
-    }
+    // // urCommandBufferReleaseExp(commandBuffer);
+    // if (commandBuffer->RefCount.release()) {
+    //   if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+    //   ZE2UR_CALL_THROWS(zeEventHostSynchronize,
+    //            (executionEvent->getZeEvent(), UINT64_MAX));
+    //   }
+    // delete commandBuffer;
+    // }
 
     UR_CALL_THROWS(queueFinish());
+    delete commandBuffer;
   } catch (...) {
     // Ignore errors during destruction
   }

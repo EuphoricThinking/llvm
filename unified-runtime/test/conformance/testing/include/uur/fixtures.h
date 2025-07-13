@@ -406,8 +406,8 @@ struct urQueueTest : urContextTest {
 
   ur_queue_properties_t queue_properties = {UR_STRUCTURE_TYPE_QUEUE_PROPERTIES,
                                             nullptr, 
-                                            0};
-                                            // UR_QUEUE_FLAG_SUBMISSION_BATCHED}; //0};
+                                            // 0};
+                                            UR_QUEUE_FLAG_SUBMISSION_BATCHED}; //0};
   ur_queue_handle_t queue = nullptr;
 };
 
@@ -478,7 +478,9 @@ template <class T> struct urQueueTestWithParam : urContextTestWithParam<T> {
     UUR_RETURN_ON_FATAL_FAILURE(urContextTestWithParam<T>::TearDown());
   }
   ur_queue_properties_t queue_properties = {UR_STRUCTURE_TYPE_QUEUE_PROPERTIES,
-                                            nullptr, 0};
+                                            nullptr, 
+                                            //0};
+                                            UR_QUEUE_FLAG_SUBMISSION_BATCHED};
   ur_queue_handle_t queue = nullptr;
 };
 
@@ -1634,6 +1636,7 @@ struct urKernelExecutionTestWithParam : urBaseKernelExecutionTestWithParam<T> {
 struct urKernelExecutionTest : urBaseKernelExecutionTest {
   void SetUp() override {
     UUR_RETURN_ON_FATAL_FAILURE(urBaseKernelExecutionTest::SetUp());
+    ASSERT_EQ(true, false) << "kernel exec\n";
     Build();
   }
 };
