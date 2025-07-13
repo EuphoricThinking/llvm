@@ -132,7 +132,7 @@ auto commandListLocked = commandBuffer->commandListManager.lock();
   //     pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendMemBufferRead(
-      hBuffer, false, offset, size, pDst, numEventsInWaitList,
+      hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
 
   return UR_RESULT_SUCCESS;
@@ -158,7 +158,7 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   //     pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+      hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
 
   return UR_RESULT_SUCCESS;
