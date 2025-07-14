@@ -479,7 +479,7 @@ template <class T> struct urQueueTestWithParam : urContextTestWithParam<T> {
   }
   ur_queue_properties_t queue_properties = {UR_STRUCTURE_TYPE_QUEUE_PROPERTIES,
                                             nullptr, 
-                                            //0};
+                                            // 0};
                                             UR_QUEUE_FLAG_SUBMISSION_BATCHED};
   ur_queue_handle_t queue = nullptr;
 };
