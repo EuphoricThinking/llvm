@@ -132,9 +132,9 @@ ur_result_t ur_exp_command_buffer_handle_t_::finalizeCommandBuffer() {
   auto commandListLocked = commandListManager.lock();
 
   // TODO check for queue
-  if (isFinalized) {
-    return UR_RESULT_SUCCESS;
-  }
+  // if (isFinalized) {
+  //   return UR_RESULT_SUCCESS;
+  // }
 
   UR_ASSERT(!isFinalized, UR_RESULT_ERROR_INVALID_OPERATION);
 
