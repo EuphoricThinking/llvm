@@ -69,6 +69,8 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       launchPropList, numEventsInWaitList, phEventWaitList,
       createEventIfRequested(eventPool.get(), phEvent, this)));
 
+
+
       return UR_RESULT_SUCCESS;
       }
 
@@ -97,6 +99,35 @@ ur_result_t ur_queue_batched_t::queueFinish() {
   });
 
   UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
+
+  // release cmdbuff
+  // urCommandBufferReleaseExp(commandBuffer);
+    if (commandBuffer->RefCount.release()) {
+      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+      ZE2UR_CALL_THROWS(zeEventHostSynchronize,
+               (executionEvent->getZeEvent(), UINT64_MAX));
+      }
+    delete commandBuffer;
+    }
+
+    // create cmdbuff
+    ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+    
+    ur_exp_command_buffer_desc_t cmdBufferDesc = {
+        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+        nullptr,     // pNext
+        false,       // isUpdatable
+        true, // isInOrder
+        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
+        (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+    };
+
+     ur::level_zero::urCommandBufferCreateExp(
+        hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
+
+        commandBuffer = std::move(cmdBuffer);
+
+
 
   return UR_RESULT_SUCCESS;
 }

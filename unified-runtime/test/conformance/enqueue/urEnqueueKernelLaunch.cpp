@@ -94,7 +94,7 @@ TEST_P(urEnqueueKernelLaunchTest, Success) {
                                        &global_offset, &global_size, nullptr, 0,
                                        nullptr, 0, nullptr, nullptr));
                                        // TODO UNCOMMENT DOBBLE
-  // ASSERT_SUCCESS(urQueueFinish(queue));
+  ASSERT_SUCCESS(urQueueFinish(queue));
   // val = 42
   ValidateBuffer(buffer, sizeof(val) * global_size, val);
 }

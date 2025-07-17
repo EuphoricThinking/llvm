@@ -1522,7 +1522,7 @@ struct KernelLaunchHelper {
 
         // TODO REMOVE DOBBLE COMMENT
     ASSERT_SUCCESS(urQueueFinish(queue));
-    sleep(3);
+    // sleep(3);
     // buffer[0] = 0
     ASSERT_TRUE(std::all_of(read_buffer.begin(), read_buffer.end(), validator));
   }
