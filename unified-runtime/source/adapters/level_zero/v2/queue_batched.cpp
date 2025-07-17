@@ -77,13 +77,16 @@ ur_result_t ur_queue_batched_t::queueFinish() {
   try {
     // urCommandBufferFinalizeExp(
     //     commandBuffer);
+    // finalize before enqueueing the command buffer
     UR_CALL(commandBuffer->finalizeCommandBuffer());
 
+    // enqueue command buffer
     auto lockedCommandListManager = commandListManager.lock();
     lockedCommandListManager->appendCommandBufferExp(
     commandBuffer, 0, nullptr,
     createEventAndRetain(eventPool.get(), nullptr, this));
 
+    // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize,
              (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
 
@@ -121,7 +124,7 @@ try {
 }
 
 ur_result_t
-ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
+ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool /* blockingRead */,
                                    size_t offset, size_t size, void *pDst,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
@@ -132,7 +135,7 @@ auto commandListLocked = commandBuffer->commandListManager.lock();
   //     pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendMemBufferRead(
-      hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
+      hBuffer, false, offset, size, pDst, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
 
   return UR_RESULT_SUCCESS;
