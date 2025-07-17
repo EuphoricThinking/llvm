@@ -155,7 +155,7 @@ try {
 }
 
 ur_result_t
-ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool /* blockingRead */,
+ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
                                    size_t offset, size_t size, void *pDst,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
@@ -164,10 +164,13 @@ ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool /* blocki
 auto commandListLocked = commandBuffer->commandListManager.lock();
   // auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
   //     pSyncPointWaitList, numSyncPointsInWaitList);
-
   UR_CALL(commandListLocked->appendMemBufferRead(
       hBuffer, false, offset, size, pDst, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
+
+  //   if (blockingRead) {
+  //     this->queueFinish();
+  // }
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
