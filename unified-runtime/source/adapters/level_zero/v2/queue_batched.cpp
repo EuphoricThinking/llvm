@@ -161,16 +161,18 @@ ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingR
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) {
   try {
-auto commandListLocked = commandBuffer->commandListManager.lock();
+    // lock acquired for cmd being finalized later - deadlock
+ {auto commandListLocked = commandBuffer->commandListManager.lock();
   // auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
   //     pSyncPointWaitList, numSyncPointsInWaitList);
   UR_CALL(commandListLocked->appendMemBufferRead(
       hBuffer, false, offset, size, pDst, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
-
-  //   if (blockingRead) {
-  //     this->queueFinish();
-  // }
+  }
+    if (blockingRead) {
+      // this->queueFinish();
+      UR_CALL_THROWS(queueFinish());
+  }
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
@@ -195,7 +197,7 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   //     pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendMemBufferWrite(
-      hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
+      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
 
   return UR_RESULT_SUCCESS;
