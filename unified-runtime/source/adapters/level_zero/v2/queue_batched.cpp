@@ -74,11 +74,56 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       return UR_RESULT_SUCCESS;
       }
 
+      ur_result_t ur_queue_batched_t::finalizeEnqueueBuffer() {
+        // finalize before enqueueing the command buffer
+        UR_CALL(commandBuffer->finalizeCommandBuffer());
+
+        // enqueue command buffer
+        auto lockedCommandListManager = commandListManager.lock();
+        lockedCommandListManager->appendCommandBufferExp(
+        commandBuffer, 0, nullptr,
+        createEventAndRetain(eventPool.get(), nullptr, this));
+
+        return UR_RESULT_SUCCESS;
+      }
+
+      ur_result_t ur_queue_batched_t::renewBuffer() {
+        // release cmdbuff
+  // urCommandBufferReleaseExp(commandBuffer);
+    if (commandBuffer->RefCount.release()) {
+      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+      ZE2UR_CALL(zeEventHostSynchronize,
+               (executionEvent->getZeEvent(), UINT64_MAX));
+      }
+    delete commandBuffer;
+    }
+
+          // create cmdbuff
+    ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+    
+    ur_exp_command_buffer_desc_t cmdBufferDesc = {
+        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+        nullptr,     // pNext
+        false,       // isUpdatable
+        true, // isInOrder
+        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
+        (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+    };
+
+     UR_CALL(ur::level_zero::urCommandBufferCreateExp(
+        hContext, hDevice, &cmdBufferDesc, &cmdBuffer));
+
+        // do I need this?
+        commandBuffer = std::move(cmdBuffer);
+
+        return UR_RESULT_SUCCESS;
+      }
 
 ur_result_t ur_queue_batched_t::queueFinish() {
   try {
     // urCommandBufferFinalizeExp(
     //     commandBuffer);
+
     // finalize before enqueueing the command buffer
     UR_CALL(commandBuffer->finalizeCommandBuffer());
 
@@ -87,6 +132,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
     lockedCommandListManager->appendCommandBufferExp(
     commandBuffer, 0, nullptr,
     createEventAndRetain(eventPool.get(), nullptr, this));
+
 
     // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize,
@@ -100,32 +146,35 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 
   UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
 
-  // release cmdbuff
-  // urCommandBufferReleaseExp(commandBuffer);
-    if (commandBuffer->RefCount.release()) {
-      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
-      ZE2UR_CALL_THROWS(zeEventHostSynchronize,
-               (executionEvent->getZeEvent(), UINT64_MAX));
-      }
-    delete commandBuffer;
-    }
+  renewBuffer();
 
-    // create cmdbuff
-    ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+  // // release cmdbuff
+  // // urCommandBufferReleaseExp(commandBuffer);
+  //   if (commandBuffer->RefCount.release()) {
+  //     if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+  //     ZE2UR_CALL_THROWS(zeEventHostSynchronize,
+  //              (executionEvent->getZeEvent(), UINT64_MAX));
+  //     }
+  //   delete commandBuffer;
+  //   }
+
+    // // create cmdbuff
+    // ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
     
-    ur_exp_command_buffer_desc_t cmdBufferDesc = {
-        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-        nullptr,     // pNext
-        false,       // isUpdatable
-        true, // isInOrder
-        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
-        (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
-    };
+    // ur_exp_command_buffer_desc_t cmdBufferDesc = {
+    //     UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+    //     nullptr,     // pNext
+    //     false,       // isUpdatable
+    //     true, // isInOrder
+    //     // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
+    //     (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+    // };
 
-     ur::level_zero::urCommandBufferCreateExp(
-        hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
+    //  ur::level_zero::urCommandBufferCreateExp(
+    //     hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
 
-        commandBuffer = std::move(cmdBuffer);
+    //     // do I need this?
+    //     commandBuffer = std::move(cmdBuffer);
 
 
 
@@ -270,15 +319,27 @@ ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
   // in this queue are completed when the signal is started. However, we do
   // need to use barrier if profiling is enabled: see
   // zeCommandListAppendWaitOnEvents
+
+  // finalize before enqueueing the command buffer
+    UR_CALL(commandBuffer->finalizeCommandBuffer());
+
+    // enqueue command buffer
+    auto lockedCommandListManager = commandListManager.lock();
+    lockedCommandListManager->appendCommandBufferExp(
+    commandBuffer, 0, nullptr,
+    createEventAndRetain(eventPool.get(), nullptr, this));
+
   if ((flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0) {
-    return commandListManager.lock()->appendEventsWaitWithBarrier(
+    UR_CALL(lockedCommandListManager->appendEventsWaitWithBarrier(
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPool.get(), phEvent, this)));
   } else {
-    return commandListManager.lock()->appendEventsWait(
+    UR_CALL(lockedCommandListManager->appendEventsWait(
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPool.get(), phEvent, this)));
   }
+
+  return renewBuffer();
 }
 
 } // namespace v2

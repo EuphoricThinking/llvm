@@ -40,6 +40,9 @@ private:
     v2::raii::cache_borrowed_event_pool eventPool;
     ur_exp_command_buffer_handle_t commandBuffer;
 
+    ur_result_t finalizeEnqueueBuffer();
+    ur_result_t renewBuffer();
+
 public:
     ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t,
                         uint32_t ordinal,
