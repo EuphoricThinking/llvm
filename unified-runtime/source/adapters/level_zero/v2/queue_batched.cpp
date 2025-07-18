@@ -249,6 +249,11 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
       hBuffer, false, offset, size, pSrc, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
 
+      if (blockingWrite) {
+      // this->queueFinish();
+      UR_CALL_THROWS(queueFinish());
+  }
+
   return UR_RESULT_SUCCESS;
 } catch (...) {
   return exceptionToResult(std::current_exception());
