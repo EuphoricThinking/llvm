@@ -26,9 +26,9 @@ class UMFSuite(Suite):
     def name(self) -> str:
         return "UMF"
 
-    def setup(self) -> None:
+    def setup(self):
         if not isUMFAvailable():
-            return
+            return []
         self.built = True
 
     def benchmarks(self) -> list[Benchmark]:

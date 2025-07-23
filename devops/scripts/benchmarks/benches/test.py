@@ -16,7 +16,7 @@ class TestSuite(Suite):
     def __init__(self):
         return
 
-    def setup(self) -> None:
+    def setup(self):
         return
 
     def name(self) -> str:

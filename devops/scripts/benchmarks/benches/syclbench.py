@@ -26,7 +26,7 @@ class SyclBench(Suite):
     def git_hash(self) -> str:
         return "31fc70be6266193c4ba60eb1fe3ce26edee4ca5b"
 
-    def setup(self) -> None:
+    def setup(self):
         if options.sycl is None:
             return
 

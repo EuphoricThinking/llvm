@@ -199,8 +199,7 @@ class Suite(ABC):
     def name(self) -> str:
         pass
 
-    @abstractmethod
-    def setup(self) -> None:
+    def setup(self):
         return
 
     def additional_metadata(self) -> dict[str, BenchmarkMetadata]:
