@@ -146,7 +146,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 
   UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
 
-  renewBuffer();
+  return renewBuffer();
 
   // // release cmdbuff
   // // urCommandBufferReleaseExp(commandBuffer);
@@ -178,7 +178,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 
 
 
-  return UR_RESULT_SUCCESS;
+  // return UR_RESULT_SUCCESS;
 }
 catch (...) {
   return exceptionToResult(std::current_exception());
@@ -241,6 +241,9 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   // the same issue as in urCommandBufferAppendKernelLaunchExp
   // sync mechanic can be ignored, because all lists are in-order
   // Responsibility of UMD to offload to copy engine
+  
+  // TODO remove double lock acquisition
+  {
   auto commandListLocked = commandBuffer->commandListManager.lock();
   // auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
   //     pSyncPointWaitList, numSyncPointsInWaitList);
@@ -248,7 +251,7 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   UR_CALL(commandListLocked->appendMemBufferWrite(
       hBuffer, false, offset, size, pSrc, numEventsInWaitList,
       phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
-
+  }
       if (blockingWrite) {
       // this->queueFinish();
       UR_CALL_THROWS(queueFinish());
