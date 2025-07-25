@@ -179,17 +179,10 @@ TEST_P(urEnqueueEventsWaitWithBarrierOrderingTest,
 
   for (size_t i = 0; i < 10; i++) {
     constexpr uint32_t ONE = 1;
-<<<<<<< HEAD
-    urEnqueueMemBufferWrite(queue, buffer, true, 0, sizeof(uint32_t), &ONE, 0,
-                            nullptr, &event);
-    ASSERT_SUCCESS(urEnqueueEventsWaitWithBarrier(queue, 1, &event, nullptr));
-    ASSERT_SUCCESS(urEnqueueKernelLaunch(queue, add_kernel, 1, &offset, &count,
-=======
     urEnqueueMemBufferWrite(queue, buffer, true, 0, sizeof(uint32_t),  &ONE, 0,
-                            nullptr, nullptr); //&event);
+                            nullptr, &event);
     EXPECT_SUCCESS(urEnqueueEventsWaitWithBarrier(queue, 1, &event, nullptr));
     EXPECT_SUCCESS(urEnqueueKernelLaunch(queue, add_kernel, 1, &offset, &count,
->>>>>>> c6e7f0a838f5 (just before rebuilding llvm with new driver tag)
                                          nullptr, 0, nullptr, 0, nullptr,
                                          &event));
     ASSERT_SUCCESS(urEnqueueEventsWaitWithBarrier(queue, 1, &event, nullptr));

@@ -214,7 +214,7 @@ class ComputeRuntime:
             "cmake",
             f"-B {self.compute_runtime_build}",
             f"-S {self.compute_runtime_repo}",
-            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_BUILD_TYPE=Debug",
             "-DNEO_ENABLE_i915_PRELIM_DETECTION=1",
             "-DNEO_ENABLE_I915_PRELIM_DETECTION=1",
             "-DNEO_SKIP_UNIT_TESTS=1",

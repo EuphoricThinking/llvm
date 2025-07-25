@@ -54,13 +54,6 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) {
-      //   return ur::level_zero::urCommandBufferAppendKernelLaunchExp(commandBuffer, hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0 /* numKernelAlternatives */, nullptr /* phKernelAlternatives */, 0 /* numSyncPointsInWaitList */, nullptr /* syncPointWaitList */, 0 /*numEventsInWaitList*/, nullptr /* *eventWaitList */, nullptr /* retSyncPoint */, nullptr /* event */, nullptr /* command - not updatable buffer */);
-      // }
-      //  return commandListManager.lock()->appendKernelLaunch(
-      //   hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      //   numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-      //   phEventWaitList,
-      //   createEventIfRequested(eventPool.get(), phEvent, this));
 
       auto commandListLocked = commandBuffer->commandListManager.lock();
 
@@ -80,9 +73,9 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 
         // enqueue command buffer
         auto lockedCommandListManager = commandListManager.lock();
-        lockedCommandListManager->appendCommandBufferExp(
+        UR_CALL(lockedCommandListManager->appendCommandBufferExp(
         commandBuffer, 0, nullptr,
-        createEventAndRetain(eventPool.get(), nullptr, this));
+        createEventAndRetain(eventPool.get(), nullptr, this)));
 
         return UR_RESULT_SUCCESS;
       }
@@ -96,6 +89,7 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
                (executionEvent->getZeEvent(), UINT64_MAX));
       }
     delete commandBuffer;
+
     }
 
           // create cmdbuff
@@ -113,7 +107,7 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
      UR_CALL(ur::level_zero::urCommandBufferCreateExp(
         hContext, hDevice, &cmdBufferDesc, &cmdBuffer));
 
-        // do I need this?
+        // do I need this move? slower?
         commandBuffer = std::move(cmdBuffer);
 
         return UR_RESULT_SUCCESS;
@@ -147,38 +141,6 @@ ur_result_t ur_queue_batched_t::queueFinish() {
   UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
 
   return renewBuffer();
-
-  // // release cmdbuff
-  // // urCommandBufferReleaseExp(commandBuffer);
-  //   if (commandBuffer->RefCount.release()) {
-  //     if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
-  //     ZE2UR_CALL_THROWS(zeEventHostSynchronize,
-  //              (executionEvent->getZeEvent(), UINT64_MAX));
-  //     }
-  //   delete commandBuffer;
-  //   }
-
-    // // create cmdbuff
-    // ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
-    
-    // ur_exp_command_buffer_desc_t cmdBufferDesc = {
-    //     UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-    //     nullptr,     // pNext
-    //     false,       // isUpdatable
-    //     true, // isInOrder
-    //     // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
-    //     (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
-    // };
-
-    //  ur::level_zero::urCommandBufferCreateExp(
-    //     hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
-
-    //     // do I need this?
-    //     commandBuffer = std::move(cmdBuffer);
-
-
-
-  // return UR_RESULT_SUCCESS;
 }
 catch (...) {
   return exceptionToResult(std::current_exception());
@@ -248,9 +210,11 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   // auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
   //     pSyncPointWaitList, numSyncPointsInWaitList);
 
+  auto fromPool = commandBuffer->poolMe();
+
   UR_CALL(commandListLocked->appendMemBufferWrite(
       hBuffer, false, offset, size, pSrc, numEventsInWaitList,
-      phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
+      phEventWaitList, fromPool)); //createEventIfRequested(eventPool.get(), phEvent, this)));
   }
       if (blockingWrite) {
       // this->queueFinish();

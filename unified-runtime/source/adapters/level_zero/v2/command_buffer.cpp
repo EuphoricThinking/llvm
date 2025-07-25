@@ -221,6 +221,13 @@ ur_result_t ur_exp_command_buffer_handle_t_::applyUpdateCommands(
   return UR_RESULT_SUCCESS;
 }
 
+ur_event_handle_t ur_exp_command_buffer_handle_t_::poolMe()  {
+    auto event = eventPool->allocate();
+  event->setQueue(nullptr);
+
+  return event;
+  }
+  
 ur_event_handle_t ur_exp_command_buffer_handle_t_::createEventIfRequested(
     ur_exp_command_buffer_sync_point_t *retSyncPoint) {
   if (retSyncPoint == nullptr) {
