@@ -16,9 +16,9 @@
 #include <variant>
 
 #include "../common.hpp"
+#include "queue_batched.hpp"
 #include "queue_immediate_in_order.hpp"
 #include "queue_immediate_out_of_order.hpp"
-#include "queue_batched.hpp"
 #include <ur_api.h>
 
 struct ur_queue_handle_t_ : ur::handle_base<ur::level_zero::ddi_getter> {

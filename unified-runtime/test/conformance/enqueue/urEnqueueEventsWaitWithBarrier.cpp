@@ -179,7 +179,7 @@ TEST_P(urEnqueueEventsWaitWithBarrierOrderingTest,
 
   for (size_t i = 0; i < 10; i++) {
     constexpr uint32_t ONE = 1;
-    urEnqueueMemBufferWrite(queue, buffer, true, 0, sizeof(uint32_t),  &ONE, 0,
+    urEnqueueMemBufferWrite(queue, buffer, true, 0, sizeof(uint32_t), &ONE, 0,
                             nullptr, &event);
     EXPECT_SUCCESS(urEnqueueEventsWaitWithBarrier(queue, 1, &event, nullptr));
     EXPECT_SUCCESS(urEnqueueKernelLaunch(queue, add_kernel, 1, &offset, &count,

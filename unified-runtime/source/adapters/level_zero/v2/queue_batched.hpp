@@ -8,7 +8,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "../common.hpp"
@@ -23,9 +22,9 @@
 
 #include "ur/ur.hpp"
 
+#include "command_buffer.hpp"
 #include "command_list_manager.hpp"
 #include "lockable.hpp"
-#include "command_buffer.hpp"
 #include "queue_immediate_in_order.hpp"
 #include "ur_api.h"
 
@@ -33,28 +32,26 @@ namespace v2 {
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
 private:
-    ur_context_handle_t hContext;
-    ur_device_handle_t hDevice;
-    lockable<ur_command_list_manager> commandListManager;
-    ur_queue_flags_t flags;
-    v2::raii::cache_borrowed_event_pool eventPool;
-    ur_exp_command_buffer_handle_t commandBuffer;
+  ur_context_handle_t hContext;
+  ur_device_handle_t hDevice;
+  lockable<ur_command_list_manager> commandListManager;
+  ur_queue_flags_t flags;
+  v2::raii::cache_borrowed_event_pool eventPool;
+  ur_exp_command_buffer_handle_t commandBuffer;
 
-    ur_result_t finalizeEnqueueBuffer();
-    ur_result_t renewBuffer();
+  ur_result_t finalizeEnqueueBuffer();
+  ur_result_t renewBuffer();
 
 public:
-    ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t,
-                        uint32_t ordinal,
-                        ze_command_queue_priority_t priority,
-                        std::optional<int32_t> index,
-                        event_flags_t eventFlags,
-                        ur_queue_flags_t flags, 
-                        ur_exp_command_buffer_handle_t cmdBuffer);
+  ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
+                     ze_command_queue_priority_t priority,
+                     std::optional<int32_t> index, event_flags_t eventFlags,
+                     ur_queue_flags_t flags,
+                     ur_exp_command_buffer_handle_t cmdBuffer);
 
-    ~ur_queue_batched_t();
+  ~ur_queue_batched_t();
 
-ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
+  ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
                            void *pPropValue, size_t *pPropSizeRet) override;
   ur_result_t queueGetNativeHandle(ur_queue_native_desc_t *pDesc,
                                    ur_native_handle_t *phNativeQueue) override;
@@ -67,12 +64,12 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override; // {
-//     return commandListManager.lock()->appendKernelLaunch(
-//         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-//         numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-//         phEventWaitList,
-//         createEventIfRequested(eventPool.get(), phEvent, this));
-//   }
+  //     return commandListManager.lock()->appendKernelLaunch(
+  //         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize,
+  //         pLocalWorkSize, numPropsInLaunchPropList, launchPropList,
+  //         numEventsInWaitList, phEventWaitList,
+  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //   }
   ur_result_t
   enqueueEventsWaitWithBarrier(uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
@@ -99,12 +96,12 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override;
-//                                     {
-//     return commandListManager.lock()->appendMemBufferRead(
-//         hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
-//         phEventWaitList,
-//         createEventIfRequested(eventPool.get(), phEvent, this));
-//   }
+  //                                     {
+  //     return commandListManager.lock()->appendMemBufferRead(
+  //         hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
+  //         phEventWaitList,
+  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //   }
 
   ur_result_t enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
                                     size_t offset, size_t size,
@@ -112,12 +109,12 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
                                     uint32_t numEventsInWaitList,
                                     const ur_event_handle_t *phEventWaitList,
                                     ur_event_handle_t *phEvent) override;
-//                                      {
-//     return commandListManager.lock()->appendMemBufferWrite(
-//         hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
-//         phEventWaitList,
-//         createEventIfRequested(eventPool.get(), phEvent, this));
-//   }
+  //                                      {
+  //     return commandListManager.lock()->appendMemBufferWrite(
+  //         hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
+  //         phEventWaitList,
+  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //   }
 
   ur_result_t enqueueMemBufferReadRect(
       ur_mem_handle_t hBuffer, bool blockingRead, ur_rect_offset_t bufferOrigin,
@@ -463,7 +460,6 @@ ur_result_t queueGetInfo(ur_queue_info_t propName, size_t propSize,
   }
 
   ur::RefCount RefCount;
-
 };
 
 } // namespace v2

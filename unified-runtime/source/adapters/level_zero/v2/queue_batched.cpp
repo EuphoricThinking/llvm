@@ -25,15 +25,12 @@
 
 namespace v2 {
 
-ur_queue_batched_t::ur_queue_batched_t(ur_context_handle_t hContext,
-    ur_device_handle_t hDevice,
-                uint32_t ordinal,
-                ze_command_queue_priority_t priority,
-                std::optional<int32_t> index,
-                event_flags_t eventFlags,
-                ur_queue_flags_t flags, 
-                ur_exp_command_buffer_handle_t cmdBuffer) 
-                : hContext(hContext), hDevice(hDevice),
+ur_queue_batched_t::ur_queue_batched_t(
+    ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
+    ze_command_queue_priority_t priority, std::optional<int32_t> index,
+    event_flags_t eventFlags, ur_queue_flags_t flags,
+    ur_exp_command_buffer_handle_t cmdBuffer)
+    : hContext(hContext), hDevice(hDevice),
       commandListManager(
           hContext, hDevice,
           hContext->getCommandListCache().getImmediateCommandList(
@@ -43,80 +40,76 @@ ur_queue_batched_t::ur_queue_batched_t(ur_context_handle_t hContext,
       flags(flags),
       eventPool(hContext->getEventPoolCache(PoolCacheType::Immediate)
                     .borrow(hDevice->Id.value(), eventFlags)),
-                    // commandBuffer(std::move(cmdBuffer))
-                    commandBuffer(cmdBuffer)
-                {}
+      // commandBuffer(std::move(cmdBuffer))
+      commandBuffer(cmdBuffer) {}
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
-      ur_kernel_handle_t hKernel, uint32_t workDim,
-      const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
-      const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
-      const ur_kernel_launch_property_t *launchPropList,
-      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) {
+    ur_kernel_handle_t hKernel, uint32_t workDim,
+    const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
+    const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
+    const ur_kernel_launch_property_t *launchPropList,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
 
-      auto commandListLocked = commandBuffer->commandListManager.lock();
+  auto commandListLocked = commandBuffer->commandListManager.lock();
 
-      UR_CALL(commandListLocked->appendKernelLaunch(
-      hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, numPropsInLaunchPropList,
-      launchPropList, numEventsInWaitList, phEventWaitList,
-      createEventIfRequested(eventPool.get(), phEvent, this)));
+  // TODO add event handling
+  UR_CALL(commandListLocked->appendKernelLaunch(
+      hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+      numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
+      phEventWaitList, nullptr));
 
+  return UR_RESULT_SUCCESS;
+}
 
+ur_result_t ur_queue_batched_t::finalizeEnqueueBuffer() {
+  // finalize before enqueueing the command buffer
+  UR_CALL(commandBuffer->finalizeCommandBuffer());
 
-      return UR_RESULT_SUCCESS;
-      }
+  // enqueue command buffer
+  auto lockedCommandListManager = commandListManager.lock();
+  UR_CALL(lockedCommandListManager->appendCommandBufferExp(
+      commandBuffer, 0, nullptr,
+      createEventAndRetain(eventPool.get(), nullptr, this)));
 
-      ur_result_t ur_queue_batched_t::finalizeEnqueueBuffer() {
-        // finalize before enqueueing the command buffer
-        UR_CALL(commandBuffer->finalizeCommandBuffer());
+  return UR_RESULT_SUCCESS;
+}
 
-        // enqueue command buffer
-        auto lockedCommandListManager = commandListManager.lock();
-        UR_CALL(lockedCommandListManager->appendCommandBufferExp(
-        commandBuffer, 0, nullptr,
-        createEventAndRetain(eventPool.get(), nullptr, this)));
-
-        return UR_RESULT_SUCCESS;
-      }
-
-      ur_result_t ur_queue_batched_t::renewBuffer() {
-        // release cmdbuff
+ur_result_t ur_queue_batched_t::renewBuffer() {
+  // release cmdbuff
   // urCommandBufferReleaseExp(commandBuffer);
-    if (commandBuffer->RefCount.release()) {
-      if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+  if (commandBuffer->RefCount.release()) {
+    if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
       ZE2UR_CALL(zeEventHostSynchronize,
-               (executionEvent->getZeEvent(), UINT64_MAX));
-      }
-    delete commandBuffer;
-
+                 (executionEvent->getZeEvent(), UINT64_MAX));
     }
+    delete commandBuffer;
+  }
 
-          // create cmdbuff
-    ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
-    
-    ur_exp_command_buffer_desc_t cmdBufferDesc = {
-        UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-        nullptr,     // pNext
-        false,       // isUpdatable
-        true, // isInOrder
-        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
-        (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
-    };
+  // create cmdbuff
+  ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
 
-     UR_CALL(ur::level_zero::urCommandBufferCreateExp(
-        hContext, hDevice, &cmdBufferDesc, &cmdBuffer));
+  ur_exp_command_buffer_desc_t cmdBufferDesc = {
+      UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+      nullptr, // pNext
+      false,   // isUpdatable
+      true,    // isInOrder
+      // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     //
+      // isInOrder
+      (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+  };
 
-        // do I need this move? slower?
-        commandBuffer = std::move(cmdBuffer);
+  UR_CALL(ur::level_zero::urCommandBufferCreateExp(hContext, hDevice,
+                                                   &cmdBufferDesc, &cmdBuffer));
 
-        return UR_RESULT_SUCCESS;
-      }
+  // do I need this move? slower?
+  commandBuffer = std::move(cmdBuffer);
+
+  return UR_RESULT_SUCCESS;
+}
 
 ur_result_t ur_queue_batched_t::queueFinish() {
   try {
-    // urCommandBufferFinalizeExp(
-    //     commandBuffer);
 
     // finalize before enqueueing the command buffer
     UR_CALL(commandBuffer->finalizeCommandBuffer());
@@ -124,40 +117,29 @@ ur_result_t ur_queue_batched_t::queueFinish() {
     // enqueue command buffer
     auto lockedCommandListManager = commandListManager.lock();
     lockedCommandListManager->appendCommandBufferExp(
-    commandBuffer, 0, nullptr,
-    createEventAndRetain(eventPool.get(), nullptr, this));
-
+        commandBuffer, 0, nullptr,
+        createEventAndRetain(eventPool.get(), nullptr, this));
 
     // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize,
-             (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
+               (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
 
-  hContext->getAsyncPool()->cleanupPoolsForQueue(this);
-  hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
-    hPool->cleanupPoolsForQueue(this);
-    return true;
-  });
+    hContext->getAsyncPool()->cleanupPoolsForQueue(this);
+    hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
+      hPool->cleanupPoolsForQueue(this);
+      return true;
+    });
 
-  UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
+    UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
 
-  return renewBuffer();
-}
-catch (...) {
-  return exceptionToResult(std::current_exception());
-}
+    return renewBuffer();
+  } catch (...) {
+    return exceptionToResult(std::current_exception());
+  }
 }
 
 ur_queue_batched_t::~ur_queue_batched_t() {
-try {
-    // // urCommandBufferReleaseExp(commandBuffer);
-    // if (commandBuffer->RefCount.release()) {
-    //   if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
-    //   ZE2UR_CALL_THROWS(zeEventHostSynchronize,
-    //            (executionEvent->getZeEvent(), UINT64_MAX));
-    //   }
-    // delete commandBuffer;
-    // }
-
+  try {
     UR_CALL_THROWS(queueFinish());
     delete commandBuffer;
   } catch (...) {
@@ -165,60 +147,53 @@ try {
   }
 }
 
-ur_result_t
-ur_queue_batched_t::enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
-                                   size_t offset, size_t size, void *pDst,
-                                   uint32_t numEventsInWaitList,
-                                   const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) {
+ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
+    ur_mem_handle_t hBuffer, bool blockingRead, size_t offset, size_t size,
+    void *pDst, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
-    // lock acquired for cmd being finalized later - deadlock
- {auto commandListLocked = commandBuffer->commandListManager.lock();
-  // auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
-  //     pSyncPointWaitList, numSyncPointsInWaitList);
-  UR_CALL(commandListLocked->appendMemBufferRead(
-      hBuffer, false, offset, size, pDst, numEventsInWaitList,
-      phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this)));
-  }
+    // TODO remove double lock acquisition
+    {
+      auto commandListLocked = commandBuffer->commandListManager.lock();
+
+      // TODO add event handling
+      UR_CALL(commandListLocked->appendMemBufferRead(
+          hBuffer, false, offset, size, pDst, numEventsInWaitList,
+          phEventWaitList, nullptr));
+    }
+
     if (blockingRead) {
-      // this->queueFinish();
       UR_CALL_THROWS(queueFinish());
+    }
+
+    return UR_RESULT_SUCCESS;
+  } catch (...) {
+    return exceptionToResult(std::current_exception());
   }
-
-  return UR_RESULT_SUCCESS;
-} catch (...) {
-  return exceptionToResult(std::current_exception());
-}
 }
 
-ur_result_t
-ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
-                                    size_t offset, size_t size,
-                                    const void *pSrc,
-                                    uint32_t numEventsInWaitList,
-                                    const ur_event_handle_t *phEventWaitList,
-                                    ur_event_handle_t *phEvent) 
-                                      try {
+ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
+    ur_mem_handle_t hBuffer, bool blockingWrite, size_t offset, size_t size,
+    const void *pSrc, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
 
   // the same issue as in urCommandBufferAppendKernelLaunchExp
   // sync mechanic can be ignored, because all lists are in-order
   // Responsibility of UMD to offload to copy engine
-  
+
   // TODO remove double lock acquisition
   {
-  auto commandListLocked = commandBuffer->commandListManager.lock();
-  // auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
-  //     pSyncPointWaitList, numSyncPointsInWaitList);
+    auto commandListLocked = commandBuffer->commandListManager.lock();
 
-  auto fromPool = commandBuffer->poolMe();
+    // TODO placeholder
+    auto fromPool = commandBuffer->poolMe();
 
-  UR_CALL(commandListLocked->appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
-      phEventWaitList, fromPool)); //createEventIfRequested(eventPool.get(), phEvent, this)));
+    UR_CALL(commandListLocked->appendMemBufferWrite(
+        hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+        phEventWaitList, fromPool));
   }
-      if (blockingWrite) {
-      // this->queueFinish();
-      UR_CALL_THROWS(queueFinish());
+  if (blockingWrite) {
+    UR_CALL_THROWS(queueFinish());
   }
 
   return UR_RESULT_SUCCESS;
@@ -226,11 +201,11 @@ ur_queue_batched_t::enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blocking
   return exceptionToResult(std::current_exception());
 }
 
+// from in_order.cpp
 
-ur_result_t
-ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
-                                            size_t propSize, void *pPropValue,
-                                            size_t *pPropSizeRet) {
+ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
+                                             size_t propSize, void *pPropValue,
+                                             size_t *pPropSizeRet) {
   UrReturnHelper ReturnValue(propSize, pPropValue, pPropSizeRet);
   // TODO: consider support for queue properties and size
   switch ((uint32_t)propName) { // cast to avoid warnings on EXT enum values
@@ -268,23 +243,21 @@ ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
   return UR_RESULT_SUCCESS;
 }
 
-
-ur_result_t ur_queue_batched_t::queueGetNativeHandle(
-    ur_queue_native_desc_t * /*pDesc*/, ur_native_handle_t *phNativeQueue) {
+ur_result_t
+ur_queue_batched_t::queueGetNativeHandle(ur_queue_native_desc_t * /*pDesc*/,
+                                         ur_native_handle_t *phNativeQueue) {
   *phNativeQueue = reinterpret_cast<ur_native_handle_t>(
       commandListManager.get_no_lock()->getZeCommandList());
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_queue_batched_t::queueFlush() {
-  return UR_RESULT_SUCCESS;
-}
+ur_result_t ur_queue_batched_t::queueFlush() { return UR_RESULT_SUCCESS; }
 
+// TODO this is probably a trash
 ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
-  TRACK_SCOPE_LATENCY(
-      "ur_queue_batched_t::enqueueEventsWaitWithBarrier");
+  TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueEventsWaitWithBarrier");
   // For in-order queue we don't need a real barrier, just wait for
   // requested events in potentially different queues and add a "barrier"
   // event signal because it is already guaranteed that previous commands
@@ -293,13 +266,13 @@ ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
   // zeCommandListAppendWaitOnEvents
 
   // finalize before enqueueing the command buffer
-    UR_CALL(commandBuffer->finalizeCommandBuffer());
+  UR_CALL(commandBuffer->finalizeCommandBuffer());
 
-    // enqueue command buffer
-    auto lockedCommandListManager = commandListManager.lock();
-    lockedCommandListManager->appendCommandBufferExp(
-    commandBuffer, 0, nullptr,
-    createEventAndRetain(eventPool.get(), nullptr, this));
+  // enqueue command buffer
+  auto lockedCommandListManager = commandListManager.lock();
+  lockedCommandListManager->appendCommandBufferExp(
+      commandBuffer, 0, nullptr,
+      createEventAndRetain(eventPool.get(), nullptr, this));
 
   if ((flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0) {
     UR_CALL(lockedCommandListManager->appendEventsWaitWithBarrier(

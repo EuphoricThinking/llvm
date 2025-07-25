@@ -11,11 +11,11 @@
  */
 
 #include "adapters/level_zero/v2/queue_batched.hpp"
+#include "command_buffer.hpp"
 #include "logger/ur_logger.hpp"
 #include "queue_api.hpp"
 #include "queue_handle.hpp"
 #include "queue_immediate_in_order.hpp"
-#include "command_buffer.hpp"
 #include "ur_api.h"
 
 namespace v2 {
@@ -72,7 +72,8 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
 
   auto zeIndex = v2::getZeIndex(pProperties);
 
-  // if (((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) && ((flags & UR_QUEUE_FLAG_SUBMISSION_BATCHED) == 0)) {
+  // if (((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) && ((flags
+  // & UR_QUEUE_FLAG_SUBMISSION_BATCHED) == 0)) {
   if ((flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0) {
     *phQueue =
         ur_queue_handle_t_::create<v2::ur_queue_immediate_out_of_order_t>(
@@ -84,18 +85,19 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
     // first, create command buffer
     // second, pass this command buffer
     ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
-    
+
     ur_exp_command_buffer_desc_t cmdBufferDesc = {
         UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-        nullptr,     // pNext
-        false,       // isUpdatable
-        true, // isInOrder
-        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     // isInOrder
+        nullptr, // pNext
+        false,   // isUpdatable
+        true,    // isInOrder
+        // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     //
+        // isInOrder
         (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
     };
 
-     ur::level_zero::urCommandBufferCreateExp(
-        hContext, hDevice, &cmdBufferDesc, &cmdBuffer);
+    ur::level_zero::urCommandBufferCreateExp(hContext, hDevice, &cmdBufferDesc,
+                                             &cmdBuffer);
     // checkImmediateAppendSupport(hContext);
     // using queue_group_type = ur_device_handle_t_::queue_group_info_t::type;
     // uint32_t queueGroupOrdinal =
@@ -111,15 +113,13 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
 
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_batched_t>(
         hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
-        zeIndex, v2::eventFlagsFromQueueFlags(flags), flags, cmdBuffer); //std::move(cmdBuffer));
+        zeIndex, v2::eventFlagsFromQueueFlags(flags), flags,
+        cmdBuffer); // std::move(cmdBuffer));
 
-  }
-  else {
+  } else {
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_immediate_in_order_t>(
         hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
         zeIndex, v2::eventFlagsFromQueueFlags(flags), flags);
-
-  
   }
 
   return UR_RESULT_SUCCESS;
