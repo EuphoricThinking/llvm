@@ -192,6 +192,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
         hBuffer, false, offset, size, pSrc, numEventsInWaitList,
         phEventWaitList, fromPool));
   }
+  
   if (blockingWrite) {
     UR_CALL_THROWS(queueFinish());
   }
