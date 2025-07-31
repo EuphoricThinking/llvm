@@ -37,7 +37,7 @@ ur_queue_batched_t::ur_queue_batched_t(
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
     event_flags_t eventFlags, ur_queue_flags_t flags)
     // : hContext(hContext), hDevice(hDevice), 
-    : commandListManagerImmediate(
+    :  commandListManagerImmediate(
           hContext, hDevice,
           hContext->getCommandListCache().getImmediateCommandList(
               hDevice->ZeDevice,
@@ -46,9 +46,9 @@ ur_queue_batched_t::ur_queue_batched_t(
     // {
   // TODO common code?
   if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
-    // UR_LOG(ERR, "Adapter v2 is used but the current driver does not support "
-    //             "the zeCommandListImmediateAppendCommandListsExp entrypoint.");
-    // throw UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    UR_LOG(ERR, "Adapter v2 is used but the current driver does not support "
+                "the zeCommandListImmediateAppendCommandListsExp entrypoint.");
+    throw UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
   }
 
   using queue_group_type = ur_device_handle_t_::queue_group_info_t::type;
