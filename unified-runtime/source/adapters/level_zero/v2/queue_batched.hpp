@@ -34,10 +34,13 @@ struct ur_queue_batched_t : ur_object, ur_queue_t_ {
 private:
   ur_context_handle_t hContext;
   ur_device_handle_t hDevice;
-  lockable<ur_command_list_manager> commandListManager;
+  lockable<ur_command_list_manager> commandListManagerImmediate;
+  std::unique_ptr<lockable<ur_command_list_manager>> commandListManagerCurrentRegular;
+  v2::command_list_desc_t regularCmddListDesc; 
+
   ur_queue_flags_t flags;
-  v2::raii::cache_borrowed_event_pool eventPool;
-  ur_exp_command_buffer_handle_t commandBuffer;
+  v2::raii::cache_borrowed_event_pool eventPoolImmediate;
+  v2::raii::cache_borrowed_event_pool eventPoolRegular;
 
   ur_result_t finalizeEnqueueBuffer();
   ur_result_t renewBuffer();
@@ -46,8 +49,12 @@ public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
                      ze_command_queue_priority_t priority,
                      std::optional<int32_t> index, event_flags_t eventFlags,
-                     ur_queue_flags_t flags,
-                     ur_exp_command_buffer_handle_t cmdBuffer);
+                     ur_queue_flags_t flags);
+
+// ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
+//                      ze_command_queue_priority_t priority,
+//                      std::optional<int32_t> index, event_flags_t eventFlags,
+//                      ur_queue_flags_t flags, v2::raii::command_list_unique_handle &&commandList);
 
   ~ur_queue_batched_t();
 
@@ -64,11 +71,11 @@ public:
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override; // {
-  //     return commandListManager.lock()->appendKernelLaunch(
+  //     return commandListManagerImmediate.lock()->appendKernelLaunch(
   //         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize,
   //         pLocalWorkSize, numPropsInLaunchPropList, launchPropList,
   //         numEventsInWaitList, phEventWaitList,
-  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   //   }
   ur_result_t
   enqueueEventsWaitWithBarrier(uint32_t numEventsInWaitList,
@@ -78,9 +85,9 @@ public:
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendEventsWait(
+    return commandListManagerImmediate.lock()->appendEventsWait(
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
   ur_result_t
   enqueueEventsWaitWithBarrierExt(const ur_exp_enqueue_ext_properties_t *,
@@ -97,10 +104,10 @@ public:
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override;
   //                                     {
-  //     return commandListManager.lock()->appendMemBufferRead(
+  //     return commandListManagerImmediate.lock()->appendMemBufferRead(
   //         hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
   //         phEventWaitList,
-  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   //   }
 
   ur_result_t enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
@@ -110,10 +117,10 @@ public:
                                     const ur_event_handle_t *phEventWaitList,
                                     ur_event_handle_t *phEvent) override;
   //                                      {
-  //     return commandListManager.lock()->appendMemBufferWrite(
+  //     return commandListManagerImmediate.lock()->appendMemBufferWrite(
   //         hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
   //         phEventWaitList,
-  //         createEventIfRequested(eventPool.get(), phEvent, this));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   //   }
 
   ur_result_t enqueueMemBufferReadRect(
@@ -123,11 +130,11 @@ public:
       size_t hostSlicePitch, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferReadRect(
+    return commandListManagerImmediate.lock()->appendMemBufferReadRect(
         hBuffer, blockingRead, bufferOrigin, hostOrigin, region, bufferRowPitch,
         bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemBufferWriteRect(
@@ -137,11 +144,11 @@ public:
       size_t hostRowPitch, size_t hostSlicePitch, void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferWriteRect(
+    return commandListManagerImmediate.lock()->appendMemBufferWriteRect(
         hBuffer, blockingWrite, bufferOrigin, hostOrigin, region,
         bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemBufferCopy(ur_mem_handle_t hBufferSrc,
@@ -150,10 +157,10 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferCopy(
+    return commandListManagerImmediate.lock()->appendMemBufferCopy(
         hBufferSrc, hBufferDst, srcOffset, dstOffset, size, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemBufferCopyRect(
@@ -163,11 +170,11 @@ public:
       size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferCopyRect(
+    return commandListManagerImmediate.lock()->appendMemBufferCopyRect(
         hBufferSrc, hBufferDst, srcOrigin, dstOrigin, region, srcRowPitch,
         srcSlicePitch, dstRowPitch, dstSlicePitch, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemBufferFill(ur_mem_handle_t hBuffer,
@@ -176,10 +183,10 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemBufferFill(
+    return commandListManagerImmediate.lock()->appendMemBufferFill(
         hBuffer, pPattern, patternSize, offset, size, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemImageRead(ur_mem_handle_t hImage, bool blockingRead,
@@ -189,10 +196,10 @@ public:
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemImageRead(
+    return commandListManagerImmediate.lock()->appendMemImageRead(
         hImage, blockingRead, origin, region, rowPitch, slicePitch, pDst,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemImageWrite(ur_mem_handle_t hImage, bool blockingWrite,
@@ -202,10 +209,10 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemImageWrite(
+    return commandListManagerImmediate.lock()->appendMemImageWrite(
         hImage, blockingWrite, origin, region, rowPitch, slicePitch, pSrc,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t
@@ -214,10 +221,10 @@ public:
                       ur_rect_region_t region, uint32_t numEventsInWaitList,
                       const ur_event_handle_t *phEventWaitList,
                       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemImageCopy(
+    return commandListManagerImmediate.lock()->appendMemImageCopy(
         hImageSrc, hImageDst, srcOrigin, dstOrigin, region, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueMemBufferMap(ur_mem_handle_t hBuffer, bool blockingMap,
@@ -226,9 +233,10 @@ public:
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent,
                                   void **ppRetMap) override {
-    return commandListManager.lock()->appendMemBufferMap(
+    return commandListManagerImmediate.lock()->appendMemBufferMap(
         hBuffer, blockingMap, mapFlags, offset, size, numEventsInWaitList,
-        phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this),
+        phEventWaitList,
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this),
         ppRetMap);
   }
 
@@ -236,9 +244,9 @@ public:
                               uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList,
                               ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendMemUnmap(
+    return commandListManagerImmediate.lock()->appendMemUnmap(
         hMem, pMappedPtr, numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMFill(void *pMem, size_t patternSize,
@@ -246,18 +254,18 @@ public:
                              uint32_t numEventsInWaitList,
                              const ur_event_handle_t *phEventWaitList,
                              ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMFill(
+    return commandListManagerImmediate.lock()->appendUSMFill(
         pMem, patternSize, pPattern, size, numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMMemcpy(bool blocking, void *pDst, const void *pSrc,
                                size_t size, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMMemcpy(
+    return commandListManagerImmediate.lock()->appendUSMMemcpy(
         blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMFill2D(void *pMem, size_t pitch, size_t patternSize,
@@ -265,10 +273,10 @@ public:
                                size_t height, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMFill2D(
+    return commandListManagerImmediate.lock()->appendUSMFill2D(
         pMem, pitch, patternSize, pPattern, width, height, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMMemcpy2D(bool blocking, void *pDst, size_t dstPitch,
@@ -277,10 +285,10 @@ public:
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
                                  ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMMemcpy2D(
+    return commandListManagerImmediate.lock()->appendUSMMemcpy2D(
         blocking, pDst, dstPitch, pSrc, srcPitch, width, height,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMPrefetch(const void *pMem, size_t size,
@@ -288,17 +296,17 @@ public:
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
                                  ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMPrefetch(
+    return commandListManagerImmediate.lock()->appendUSMPrefetch(
         pMem, size, flags, numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMAdvise(const void *pMem, size_t size,
                                ur_usm_advice_flags_t advice,
                                ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMAdvise(
+    return commandListManagerImmediate.lock()->appendUSMAdvise(
         pMem, size, advice, 0, nullptr,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueDeviceGlobalVariableWrite(
@@ -306,10 +314,10 @@ public:
       size_t count, size_t offset, const void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendDeviceGlobalVariableWrite(
+    return commandListManagerImmediate.lock()->appendDeviceGlobalVariableWrite(
         hProgram, name, blockingWrite, count, offset, pSrc, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueDeviceGlobalVariableRead(
@@ -317,10 +325,10 @@ public:
       size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendDeviceGlobalVariableRead(
+    return commandListManagerImmediate.lock()->appendDeviceGlobalVariableRead(
         hProgram, name, blockingRead, count, offset, pDst, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueReadHostPipe(ur_program_handle_t hProgram,
@@ -329,10 +337,10 @@ public:
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendReadHostPipe(
+    return commandListManagerImmediate.lock()->appendReadHostPipe(
         hProgram, pipe_symbol, blocking, pDst, size, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueWriteHostPipe(ur_program_handle_t hProgram,
@@ -341,10 +349,10 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendWriteHostPipe(
+    return commandListManagerImmediate.lock()->appendWriteHostPipe(
         hProgram, pipe_symbol, blocking, pSrc, size, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMDeviceAllocExp(
@@ -352,9 +360,9 @@ public:
       const ur_exp_async_usm_alloc_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       void **ppMem, ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMAllocHelper(
+    return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
+        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this),
         UR_USM_TYPE_DEVICE);
   }
 
@@ -363,9 +371,9 @@ public:
       const ur_exp_async_usm_alloc_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       void **ppMem, ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMAllocHelper(
+    return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
+        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this),
         UR_USM_TYPE_SHARED);
   }
 
@@ -375,9 +383,9 @@ public:
                          uint32_t numEventsInWaitList,
                          const ur_event_handle_t *phEventWaitList, void **ppMem,
                          ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMAllocHelper(
+    return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
+        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this),
         UR_USM_TYPE_HOST);
   }
 
@@ -385,9 +393,9 @@ public:
                                 uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendUSMFreeExp(
+    return commandListManagerImmediate.lock()->appendUSMFreeExp(
         this, pPool, pMem, numEventsInWaitList, phEventWaitList,
-        createEventAndRetain(eventPool.get(), phEvent, this));
+        createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t bindlessImagesImageCopyExp(
@@ -399,11 +407,11 @@ public:
       ur_exp_image_copy_flags_t imageCopyFlags, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->bindlessImagesImageCopyExp(
+    return commandListManagerImmediate.lock()->bindlessImagesImageCopyExp(
         pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
         pDstImageFormat, pCopyRegion, imageCopyFlags, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t bindlessImagesWaitExternalSemaphoreExp(
@@ -411,10 +419,10 @@ public:
       uint64_t waitValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->bindlessImagesWaitExternalSemaphoreExp(
+    return commandListManagerImmediate.lock()->bindlessImagesWaitExternalSemaphoreExp(
         hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t bindlessImagesSignalExternalSemaphoreExp(
@@ -422,19 +430,19 @@ public:
       uint64_t signalValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->bindlessImagesSignalExternalSemaphoreExp(
+    return commandListManagerImmediate.lock()->bindlessImagesSignalExternalSemaphoreExp(
         hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
         phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t
   enqueueTimestampRecordingExp(bool blocking, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendTimestampRecordingExp(
+    return commandListManagerImmediate.lock()->appendTimestampRecordingExp(
         blocking, numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t
@@ -442,9 +450,9 @@ public:
                           uint32_t numEventsInWaitList,
                           const ur_event_handle_t *phEventWaitList,
                           ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendCommandBufferExp(
+    return commandListManagerImmediate.lock()->appendCommandBufferExp(
         hCommandBuffer, numEventsInWaitList, phEventWaitList,
-        createEventAndRetain(eventPool.get(), phEvent, this));
+        createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t enqueueNativeCommandExp(
@@ -453,10 +461,10 @@ public:
       const ur_exp_enqueue_native_command_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManager.lock()->appendNativeCommandExp(
+    return commandListManagerImmediate.lock()->appendNativeCommandExp(
         pfnNativeEnqueue, data, numMemsInMemList, phMemList, pProperties,
         numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this));
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur::RefCount RefCount;

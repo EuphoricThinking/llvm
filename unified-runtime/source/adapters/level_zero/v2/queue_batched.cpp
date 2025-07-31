@@ -9,6 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "queue_batched.hpp"
+#include "adapters/level_zero/v2/command_list_manager.hpp"
+#include "adapters/level_zero/v2/lockable.hpp"
 #include "command_buffer.hpp"
 #include "kernel.hpp"
 #include "memory.hpp"
@@ -25,23 +27,61 @@
 
 namespace v2 {
 
+// lockable<ur_command_list_manager> getNewRegularCmdListManager() {
+
+// }
+
+
 ur_queue_batched_t::ur_queue_batched_t(
     ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
-    event_flags_t eventFlags, ur_queue_flags_t flags,
-    ur_exp_command_buffer_handle_t cmdBuffer)
-    : hContext(hContext), hDevice(hDevice),
-      commandListManager(
+    event_flags_t eventFlags, ur_queue_flags_t flags)
+    // : hContext(hContext), hDevice(hDevice), 
+    : commandListManagerImmediate(
           hContext, hDevice,
           hContext->getCommandListCache().getImmediateCommandList(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
-              ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
-      flags(flags),
-      eventPool(hContext->getEventPoolCache(PoolCacheType::Immediate)
-                    .borrow(hDevice->Id.value(), eventFlags)),
-      // commandBuffer(std::move(cmdBuffer))
-      commandBuffer(cmdBuffer) {}
+              ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)) {
+    // {
+  // TODO common code?
+  if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
+    // UR_LOG(ERR, "Adapter v2 is used but the current driver does not support "
+    //             "the zeCommandListImmediateAppendCommandListsExp entrypoint.");
+    // throw UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+  }
+
+  using queue_group_type = ur_device_handle_t_::queue_group_info_t::type;
+  uint32_t queueGroupOrdinal =
+      hDevice->QueueGroup[queue_group_type::Compute].ZeOrdinal;
+  v2::command_list_desc_t listDesc;
+  listDesc.IsInOrder = true;
+  listDesc.Ordinal = queueGroupOrdinal;
+  listDesc.CopyOffloadEnable = true;
+  listDesc.Mutable = false;
+
+  v2::raii::command_list_unique_handle zeCommandList =
+      hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+                                                            listDesc);
+
+  this->hContext = hContext;
+  this->hDevice = hDevice;
+  commandListManagerCurrentRegular = std::make_unique<lockable<ur_command_list_manager>>(hContext, hDevice,
+          std::forward<v2::raii::command_list_unique_handle>(zeCommandList));
+
+  this->regularCmddListDesc = listDesc;
+  this->flags = flags;
+
+  // eventPoolRegular(context->getEventPoolCache(PoolCacheType::Regular)
+  //               .borrow(device->Id.value(),
+  //                       isInOrder ? v2::EVENT_FLAGS_COUNTER : 0))
+  // always in order
+  eventPoolImmediate = hContext->getEventPoolCache(PoolCacheType::Immediate)
+                           .borrow(hDevice->Id.value(), eventFlags);
+  eventPoolRegular = hContext->getEventPoolCache(PoolCacheType::Regular)
+                         .borrow(hDevice->Id.value(), v2::EVENT_FLAGS_COUNTER);
+  // TODO make const? always copy? - function needs const
+}
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
     ur_kernel_handle_t hKernel, uint32_t workDim,
@@ -51,7 +91,7 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
-  auto commandListLocked = commandBuffer->commandListManager.lock();
+  auto commandListLocked = commandListManagerCurrentRegular->lock();
 
   // TODO add event handling
   UR_CALL(commandListLocked->appendKernelLaunch(
@@ -62,63 +102,63 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_queue_batched_t::finalizeEnqueueBuffer() {
-  // finalize before enqueueing the command buffer
-  UR_CALL(commandBuffer->finalizeCommandBuffer());
+// ur_result_t ur_queue_batched_t::finalizeEnqueueBuffer() {
+//   // finalize before enqueueing the command buffer
+//   UR_CALL(commandBuffer->finalizeCommandBuffer());
 
-  // enqueue command buffer
-  auto lockedCommandListManager = commandListManager.lock();
-  UR_CALL(lockedCommandListManager->appendCommandBufferExp(
-      commandBuffer, 0, nullptr,
-      createEventAndRetain(eventPool.get(), nullptr, this)));
+//   // enqueue command buffer
+//   auto lockedCommandListManager = commandListManager.lock();
+//   UR_CALL(lockedCommandListManager->appendCommandBufferExp(
+//       commandBuffer, 0, nullptr,
+//       createEventAndRetain(eventPool.get(), nullptr, this)));
 
-  return UR_RESULT_SUCCESS;
-}
+//   return UR_RESULT_SUCCESS;
+// }
 
-ur_result_t ur_queue_batched_t::renewBuffer() {
-  // release cmdbuff
-  // urCommandBufferReleaseExp(commandBuffer);
-  if (commandBuffer->RefCount.release()) {
-    if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
-      ZE2UR_CALL(zeEventHostSynchronize,
-                 (executionEvent->getZeEvent(), UINT64_MAX));
-    }
-    delete commandBuffer;
-  }
+// ur_result_t ur_queue_batched_t::renewBuffer() {
+//   // release cmdbuff
+//   // urCommandBufferReleaseExp(commandBuffer);
+//   if (commandBuffer->RefCount.release()) {
+//     if (auto executionEvent = commandBuffer->getExecutionEventUnlocked()) {
+//       ZE2UR_CALL(zeEventHostSynchronize,
+//                  (executionEvent->getZeEvent(), UINT64_MAX));
+//     }
+//     delete commandBuffer;
+// //   }
 
-  // create cmdbuff
-  ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
+//   // create cmdbuff
+//   ur_exp_command_buffer_handle_t cmdBuffer = nullptr;
 
-  ur_exp_command_buffer_desc_t cmdBufferDesc = {
-      UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
-      nullptr, // pNext
-      false,   // isUpdatable
-      true,    // isInOrder
-      // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     //
-      // isInOrder
-      (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
-  };
+//   ur_exp_command_buffer_desc_t cmdBufferDesc = {
+//       UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_DESC,
+//       nullptr, // pNext
+//       false,   // isUpdatable
+//       true,    // isInOrder
+//       // (flags & UR_QUEUE_FLAG_OUT_OF_ORDER_EXEC_MODE_ENABLE) != 0,     //
+//       // isInOrder
+//       (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0 // enableProfiling
+//   };
 
-  UR_CALL(ur::level_zero::urCommandBufferCreateExp(hContext, hDevice,
-                                                   &cmdBufferDesc, &cmdBuffer));
+//   UR_CALL(ur::level_zero::urCommandBufferCreateExp(hContext, hDevice,
+//                                                    &cmdBufferDesc, &cmdBuffer));
 
-  // do I need this move? slower?
-  commandBuffer = std::move(cmdBuffer);
+//   // do I need this move? slower?
+//   commandBuffer = std::move(cmdBuffer);
 
-  return UR_RESULT_SUCCESS;
-}
+//   return UR_RESULT_SUCCESS;
+// }
 
 ur_result_t ur_queue_batched_t::queueFinish() {
   try {
 
-    // finalize before enqueueing the command buffer
-    UR_CALL(commandBuffer->finalizeCommandBuffer());
+    // // finalize before enqueueing the command buffer
+    // UR_CALL(commandBuffer->finalizeCommandBuffer());
 
-    // enqueue command buffer
-    auto lockedCommandListManager = commandListManager.lock();
-    lockedCommandListManager->appendCommandBufferExp(
-        commandBuffer, 0, nullptr,
-        createEventAndRetain(eventPool.get(), nullptr, this));
+    // // enqueue command buffer
+    auto lockedCommandListManager = commandListManagerImmediate.lock();
+    // lockedCommandListManager->appendCommandBufferExp(
+    //     commandBuffer, 0, nullptr,
+    //     createEventAndRetain(eventPool.get(), nullptr, this));
 
     // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize,
@@ -141,7 +181,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 ur_queue_batched_t::~ur_queue_batched_t() {
   try {
     UR_CALL_THROWS(queueFinish());
-    delete commandBuffer;
+    // delete commandBuffer;
   } catch (...) {
     // Ignore errors during destruction
   }
@@ -154,7 +194,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
   try {
     // TODO remove double lock acquisition
     {
-      auto commandListLocked = commandBuffer->commandListManager.lock();
+      auto commandListLocked = commandListManagerCurrentRegular->lock();
 
       // TODO add event handling
       UR_CALL(commandListLocked->appendMemBufferRead(
@@ -183,16 +223,16 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
 
   // TODO remove double lock acquisition
   {
-    auto commandListLocked = commandBuffer->commandListManager.lock();
+    auto commandListLocked = commandListManagerCurrentRegular->lock();
 
     // TODO placeholder
-    auto fromPool = commandBuffer->poolMe();
+    auto fromPool = nullptr; //commandBuffer->poolMe();
 
     UR_CALL(commandListLocked->appendMemBufferWrite(
         hBuffer, false, offset, size, pSrc, numEventsInWaitList,
         phEventWaitList, fromPool));
   }
-  
+
   if (blockingWrite) {
     UR_CALL_THROWS(queueFinish());
   }
@@ -224,7 +264,7 @@ ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
   case UR_QUEUE_INFO_EMPTY: {
     auto status = ZE_CALL_NOCHECK(
         zeCommandListHostSynchronize,
-        (commandListManager.get_no_lock()->getZeCommandList(), 0));
+        (commandListManagerImmediate.get_no_lock()->getZeCommandList(), 0));
     if (status == ZE_RESULT_SUCCESS) {
       return ReturnValue(true);
     } else if (status == ZE_RESULT_NOT_READY) {
@@ -248,7 +288,7 @@ ur_result_t
 ur_queue_batched_t::queueGetNativeHandle(ur_queue_native_desc_t * /*pDesc*/,
                                          ur_native_handle_t *phNativeQueue) {
   *phNativeQueue = reinterpret_cast<ur_native_handle_t>(
-      commandListManager.get_no_lock()->getZeCommandList());
+      commandListManagerImmediate.get_no_lock()->getZeCommandList());
   return UR_RESULT_SUCCESS;
 }
 
@@ -267,25 +307,25 @@ ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
   // zeCommandListAppendWaitOnEvents
 
   // finalize before enqueueing the command buffer
-  UR_CALL(commandBuffer->finalizeCommandBuffer());
+  // UR_CALL(commandBuffer->finalizeCommandBuffer());
 
-  // enqueue command buffer
-  auto lockedCommandListManager = commandListManager.lock();
-  lockedCommandListManager->appendCommandBufferExp(
-      commandBuffer, 0, nullptr,
-      createEventAndRetain(eventPool.get(), nullptr, this));
+  // // enqueue command buffer
+  // auto lockedCommandListManager = commandListManager.lock();
+  // lockedCommandListManager->appendCommandBufferExp(
+  //     commandBuffer, 0, nullptr,
+  //     createEventAndRetain(eventPool.get(), nullptr, this));
 
-  if ((flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0) {
-    UR_CALL(lockedCommandListManager->appendEventsWaitWithBarrier(
-        numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this)));
-  } else {
-    UR_CALL(lockedCommandListManager->appendEventsWait(
-        numEventsInWaitList, phEventWaitList,
-        createEventIfRequested(eventPool.get(), phEvent, this)));
-  }
+  // if ((flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0) {
+  //   UR_CALL(lockedCommandListManager->appendEventsWaitWithBarrier(
+  //       numEventsInWaitList, phEventWaitList,
+  //       createEventIfRequested(eventPool.get(), phEvent, this)));
+  // } else {
+  //   UR_CALL(lockedCommandListManager->appendEventsWait(
+  //       numEventsInWaitList, phEventWaitList,
+  //       createEventIfRequested(eventPool.get(), phEvent, this)));
+  // }
 
-  return renewBuffer();
+  // return renewBuffer();
 }
 
 } // namespace v2
