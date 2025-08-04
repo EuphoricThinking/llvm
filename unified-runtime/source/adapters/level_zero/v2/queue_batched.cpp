@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "queue_batched.hpp"
+#include "adapters/level_zero/v2/command_list_cache.hpp"
 #include "adapters/level_zero/v2/command_list_manager.hpp"
 #include "adapters/level_zero/v2/lockable.hpp"
 #include "command_buffer.hpp"
@@ -32,19 +33,25 @@ namespace v2 {
 
 // }
 
-
 ur_queue_batched_t::ur_queue_batched_t(
     ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
     event_flags_t eventFlags, ur_queue_flags_t flags)
-    // : hContext(hContext), hDevice(hDevice), 
-    :  commandListManagerImmediate(
+    // : hContext(hContext), hDevice(hDevice),
+    : commandListManagerImmediate(
           hContext, hDevice,
           hContext->getCommandListCache().getImmediateCommandList(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
-              ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)) {
-    // {
+              ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
+              currentBatch(hContext, hDevice,
+              hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+              v2::command_list_desc_t{true /* isInOrder*/, 
+                (uint32_t) hDevice->QueueGroup[ur_device_handle_t_::queue_group_info_t::type::Compute].ZeOrdinal /* Ordinal*/
+                
+                , true /* copyOffloadEnable*/, false /*isMutable*/}
+              )) {
+  // {
   // TODO common code?
   if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
     UR_LOG(ERR, "Adapter v2 is used but the current driver does not support "
@@ -67,10 +74,15 @@ ur_queue_batched_t::ur_queue_batched_t(
 
   this->hContext = hContext;
   this->hDevice = hDevice;
-  commandListManagerCurrentRegular = std::make_unique<lockable<ur_command_list_manager>>(hContext, hDevice,
+  commandListManagerCurrentRegular =
+      std::make_unique<lockable<ur_command_list_manager>>(
+          hContext, hDevice,
           std::forward<v2::raii::command_list_unique_handle>(zeCommandList));
 
   this->regularCmddListDesc = listDesc;
+
+  runBatches = std::vector<ur_command_list_manager>(default_num_batches);
+
   this->flags = flags;
 
   // eventPoolRegular(context->getEventPoolCache(PoolCacheType::Regular)
@@ -141,7 +153,8 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 //   };
 
 //   UR_CALL(ur::level_zero::urCommandBufferCreateExp(hContext, hDevice,
-//                                                    &cmdBufferDesc, &cmdBuffer));
+//                                                    &cmdBufferDesc,
+//                                                    &cmdBuffer));
 
 //   // do I need this move? slower?
 //   commandBuffer = std::move(cmdBuffer);
@@ -227,7 +240,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     auto commandListLocked = commandListManagerCurrentRegular->lock();
 
     // TODO placeholder
-    auto fromPool = nullptr; //commandBuffer->poolMe();
+    auto fromPool = nullptr; // commandBuffer->poolMe();
 
     UR_CALL(commandListLocked->appendMemBufferWrite(
         hBuffer, false, offset, size, pSrc, numEventsInWaitList,

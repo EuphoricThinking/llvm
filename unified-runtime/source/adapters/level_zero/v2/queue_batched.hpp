@@ -30,13 +30,32 @@
 
 namespace v2 {
 
+   struct Batch {
+    public:
+    ur_command_list_manager regularBatch;
+    uint64_t generation;
+
+    Batch(ur_context_handle_t context,
+                          ur_device_handle_t device,
+                          v2::raii::command_list_unique_handle &&commandList) : regularBatch(context, device, std::move(commandList)), generation(0) {
+                          }
+  };
+
+
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
 private:
+
+
+  uint64_t default_num_batches = 10;
+
   ur_context_handle_t hContext;
   ur_device_handle_t hDevice;
   lockable<ur_command_list_manager> commandListManagerImmediate;
-  std::unique_ptr<lockable<ur_command_list_manager>> commandListManagerCurrentRegular;
-  v2::command_list_desc_t regularCmddListDesc; 
+  std::unique_ptr<lockable<ur_command_list_manager>>
+      commandListManagerCurrentRegular;
+  v2::command_list_desc_t regularCmddListDesc;
+  lockable<Batch> currentBatch;
+  std::vector<ur_command_list_manager> runBatches;
 
   ur_queue_flags_t flags;
   v2::raii::cache_borrowed_event_pool eventPoolImmediate;
@@ -51,10 +70,12 @@ public:
                      std::optional<int32_t> index, event_flags_t eventFlags,
                      ur_queue_flags_t flags);
 
-// ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
-//                      ze_command_queue_priority_t priority,
-//                      std::optional<int32_t> index, event_flags_t eventFlags,
-//                      ur_queue_flags_t flags, v2::raii::command_list_unique_handle &&commandList);
+  // ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t
+  // ordinal,
+  //                      ze_command_queue_priority_t priority,
+  //                      std::optional<int32_t> index, event_flags_t
+  //                      eventFlags, ur_queue_flags_t flags,
+  //                      v2::raii::command_list_unique_handle &&commandList);
 
   ~ur_queue_batched_t();
 
@@ -419,10 +440,11 @@ public:
       uint64_t waitValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManagerImmediate.lock()->bindlessImagesWaitExternalSemaphoreExp(
-        hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
-        phEventWaitList,
-        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
+    return commandListManagerImmediate.lock()
+        ->bindlessImagesWaitExternalSemaphoreExp(
+            hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
+            phEventWaitList,
+            createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t bindlessImagesSignalExternalSemaphoreExp(
@@ -430,10 +452,11 @@ public:
       uint64_t signalValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
-    return commandListManagerImmediate.lock()->bindlessImagesSignalExternalSemaphoreExp(
-        hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
-        phEventWaitList,
-        createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
+    return commandListManagerImmediate.lock()
+        ->bindlessImagesSignalExternalSemaphoreExp(
+            hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
+            phEventWaitList,
+            createEventIfRequested(eventPoolImmediate.get(), phEvent, this));
   }
 
   ur_result_t
