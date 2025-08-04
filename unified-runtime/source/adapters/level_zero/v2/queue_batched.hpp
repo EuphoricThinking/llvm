@@ -59,11 +59,15 @@ private:
 
   ur_result_t finalizeEnqueueBuffer();
   ur_result_t renewBuffer();
-  
+
   v2::raii::command_list_unique_handle getNewRegularCmdList() {
     return hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
                                                             regularCmdListDesc);
   }
+
+  void runOldBatchRenewBatch();
+
+  
 
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
