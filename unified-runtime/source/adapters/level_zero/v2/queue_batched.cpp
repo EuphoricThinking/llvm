@@ -24,6 +24,7 @@
 #include "../ur_interface_loader.hpp"
 #include "ur_api.h"
 #include <cstddef>
+#include <cstdint>
 
 namespace v2 {
 
