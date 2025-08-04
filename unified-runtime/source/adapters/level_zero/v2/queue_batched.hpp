@@ -30,22 +30,18 @@
 
 namespace v2 {
 
-   struct Batch {
-    public:
-    ur_command_list_manager regularBatch;
-    uint64_t generation;
+struct Batch {
+public:
+  ur_command_list_manager regularBatch;
+  uint64_t generation;
 
-    Batch(ur_context_handle_t context,
-                          ur_device_handle_t device,
-                          v2::raii::command_list_unique_handle &&commandList) : regularBatch(context, device, std::move(commandList)), generation(0) {
-                          }
-  };
-
+  Batch(ur_context_handle_t context, ur_device_handle_t device,
+        v2::raii::command_list_unique_handle &&commandList)
+      : regularBatch(context, device, std::forward<v2::raii::command_list_unique_handle>(commandList)), generation(0) {}
+};
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
 private:
-
-
   uint64_t default_num_batches = 10;
 
   ur_context_handle_t hContext;
@@ -53,7 +49,7 @@ private:
   lockable<ur_command_list_manager> commandListManagerImmediate;
   std::unique_ptr<lockable<ur_command_list_manager>>
       commandListManagerCurrentRegular;
-  v2::command_list_desc_t regularCmddListDesc;
+  v2::command_list_desc_t regularCmdListDesc;
   lockable<Batch> currentBatch;
   std::vector<ur_command_list_manager> runBatches;
 
@@ -63,6 +59,11 @@ private:
 
   ur_result_t finalizeEnqueueBuffer();
   ur_result_t renewBuffer();
+  
+  v2::raii::command_list_unique_handle getNewRegularCmdList() {
+    return hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+                                                            regularCmdListDesc);
+  }
 
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,

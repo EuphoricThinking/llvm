@@ -29,8 +29,9 @@
 
 namespace v2 {
 
-// lockable<ur_command_list_manager> getNewRegularCmdListManager() {
-
+// v2::raii::command_list_unique_handle ur_queue_batched_t::getNewRegularCmdList() {
+//   return hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+//                                                             listDesc);
 // }
 
 ur_queue_batched_t::ur_queue_batched_t(
@@ -44,13 +45,19 @@ ur_queue_batched_t::ur_queue_batched_t(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
               ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
-              currentBatch(hContext, hDevice,
-              hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
-              v2::command_list_desc_t{true /* isInOrder*/, 
-                (uint32_t) hDevice->QueueGroup[ur_device_handle_t_::queue_group_info_t::type::Compute].ZeOrdinal /* Ordinal*/
-                
-                , true /* copyOffloadEnable*/, false /*isMutable*/}
-              )) {
+      currentBatch(
+          hContext, hDevice,
+          hContext->getCommandListCache().getRegularCommandList(
+              hDevice->ZeDevice,
+              v2::command_list_desc_t{
+                  true /* isInOrder*/,
+                  (uint32_t)hDevice
+                      ->QueueGroup[ur_device_handle_t_::queue_group_info_t::
+                                       type::Compute]
+                      .ZeOrdinal /* Ordinal*/
+
+                  ,
+                  true /* copyOffloadEnable*/, false /*isMutable*/})) {
   // {
   // TODO common code?
   if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
@@ -79,7 +86,7 @@ ur_queue_batched_t::ur_queue_batched_t(
           hContext, hDevice,
           std::forward<v2::raii::command_list_unique_handle>(zeCommandList));
 
-  this->regularCmddListDesc = listDesc;
+  this->regularCmdListDesc = listDesc;
 
   runBatches = std::vector<ur_command_list_manager>(default_num_batches);
 
