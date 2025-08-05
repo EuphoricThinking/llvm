@@ -135,6 +135,13 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPo
 }
 
 ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation) {
+  auto batchLocked = currentBatch.lock();
+
+  if (batch_generation == batchLocked->generation) {
+    // run batch
+    
+  }
+
   return UR_RESULT_SUCCESS;
 }
 
