@@ -503,8 +503,8 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
 
 ur_result_t ur_command_list_manager::appendRegular(ze_command_list_handle_t *phCommandLists) {
    ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
-             getZeCommandList(), 1, phCommandLists,
-              nullptr, 0, wait_list_view{nullptr, 0});
+             (getZeCommandList(), 1, phCommandLists,
+              nullptr, 0, nullptr));
 
   return UR_RESULT_SUCCESS;
 }
