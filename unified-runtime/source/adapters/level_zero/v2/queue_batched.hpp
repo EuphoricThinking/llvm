@@ -34,7 +34,7 @@ struct Batch {
 public:
   ur_command_list_manager regularBatch;
   ur_command_list_manager immediateList;
-  uint64_t generation;
+  int64_t generation;
 
   Batch(ur_context_handle_t context, ur_device_handle_t device,
         v2::raii::command_list_unique_handle &&commandListRegular,

@@ -139,8 +139,10 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
 
   if (batch_generation == batchLocked->generation) {
     // run batch
-    
+    batchLocked->immediateList.appendRegular(&batchLocked->regularBatch.getZeCommandList());
   }
+
+  // else: it must be older and already run
 
   return UR_RESULT_SUCCESS;
 }
