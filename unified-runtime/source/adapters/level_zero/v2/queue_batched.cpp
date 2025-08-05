@@ -101,7 +101,8 @@ ur_queue_batched_t::ur_queue_batched_t(
 
   this->regularCmdListDesc = listDesc;
 
-  // runBatches = std::vector<ur_command_list_manager>(default_num_batches);
+  runBatches = std::vector<ur_command_list_manager>();
+  runBatches.reserve(default_num_batches);
 
   this->flags = flags;
 
