@@ -70,6 +70,7 @@ public:
   void setQueue(ur_queue_t_ *hQueue);
   void setBatch(int64_t batch_generation);
   void setCommandType(ur_command_t commandType);
+  void runBatch();
 
   void reset();
   ze_event_handle_t getZeEvent() const;

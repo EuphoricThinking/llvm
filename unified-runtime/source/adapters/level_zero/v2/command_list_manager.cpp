@@ -129,6 +129,8 @@ wait_list_view ur_command_list_manager::getWaitListView(
       numWaitEvents + (additionalWaitEvent != nullptr ? 1 : 0);
   waitList.resize(totalNumWaitEvents);
   for (uint32_t i = 0; i < numWaitEvents; i++) {
+    // TODO is it a good place for it? mixing function purposes, but might miss preprocessing elsewhere
+    phWaitEvents[i]->runBatch();
     waitList[i] = phWaitEvents[i]->getZeEvent();
   }
   if (additionalWaitEvent != nullptr) {

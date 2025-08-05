@@ -132,6 +132,13 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
   this->commandType = commandType;
 }
 
+void ur_event_handle_t_::runBatch() {
+  if (batch_generation != -1) {
+    // TODO check generation number
+    hQueue->runBatchIfCurrentBatch(batch_generation);
+  }
+}
+
 void ur_event_handle_t_::recordStartTimestamp() {
   // queue and device must be set before calling this
   assert(hQueue);

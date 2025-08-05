@@ -27,6 +27,11 @@ struct ur_queue_t_ {
                                            ur_native_handle_t *) = 0;
   virtual ur_result_t queueFinish() = 0;
   virtual ur_result_t queueFlush() = 0;
+
+    virtual ur_result_t runBatchIfCurrentBatch(int64_t batch_generation) {
+        return UR_RESULT_SUCCESS;
+    }
+
   virtual ur_result_t enqueueKernelLaunch(ur_kernel_handle_t, uint32_t,
                                           const size_t *, const size_t *,
                                           const size_t *, uint32_t,

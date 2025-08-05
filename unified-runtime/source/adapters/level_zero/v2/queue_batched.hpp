@@ -77,7 +77,7 @@ private:
 
   ur_event_handle_t createEventIfRequested(event_pool *eventPool,
                                            ur_event_handle_t *phEvent,
-                                           ur_queue_t_ *queue);
+                                           ur_queue_t_ *queue, int64_t generation_number);
 
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
@@ -85,6 +85,7 @@ public:
                      std::optional<int32_t> index, event_flags_t eventFlags,
                      ur_queue_flags_t flags);
 
+                     ur_result_t runBatchIfCurrentBatch(int64_t batch_generation) override;
   // ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t
   // ordinal,
   //                      ze_command_queue_priority_t priority,

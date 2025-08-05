@@ -119,7 +119,7 @@ ur_queue_batched_t::ur_queue_batched_t(
   // TODO make const? always copy? - function needs const
 }
 
-ur_event_handle_t createEventIfRequested(event_pool *eventPool,
+ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPool,
                                          ur_event_handle_t *phEvent,
                                          ur_queue_t_ *queue,
                                          int64_t batch_generation) {
@@ -132,6 +132,10 @@ ur_event_handle_t createEventIfRequested(event_pool *eventPool,
   (*phEvent)->setBatch(batch_generation);
 
   return (*phEvent);
+}
+
+ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation) {
+  return UR_RESULT_SUCCESS;
 }
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
