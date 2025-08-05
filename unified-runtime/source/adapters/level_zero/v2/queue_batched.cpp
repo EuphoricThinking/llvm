@@ -52,6 +52,7 @@ ur_queue_batched_t::ur_queue_batched_t(
               ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
       currentBatch(
           hContext, hDevice,
+          /* regular command list*/
           hContext->getCommandListCache().getRegularCommandList(
               hDevice->ZeDevice,
               v2::command_list_desc_t{
@@ -62,7 +63,14 @@ ur_queue_batched_t::ur_queue_batched_t(
                       .ZeOrdinal /* Ordinal*/
 
                   ,
-                  true /* copyOffloadEnable*/, false /*isMutable*/})) {
+                  true /* copyOffloadEnable*/, false /*isMutable*/}),
+                /* command list immediate*/
+                hContext->getCommandListCache().getImmediateCommandList(
+              hDevice->ZeDevice,
+              {true, ordinal, true /* always enable copy offload */},
+              ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)
+                
+                ) {
   // {
   // TODO common code?
   if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
