@@ -37,8 +37,15 @@ public:
   uint64_t generation;
 
   Batch(ur_context_handle_t context, ur_device_handle_t device,
-        v2::raii::command_list_unique_handle &&commandListRegular, v2::raii::command_list_unique_handle &&commandListImmediate)
-      : regularBatch(context, device, std::forward<v2::raii::command_list_unique_handle>(commandListRegular)), immediateList(context, device, std::forward<v2::raii::command_list_unique_handle>(commandListImmediate)), generation(0) {}
+        v2::raii::command_list_unique_handle &&commandListRegular,
+        v2::raii::command_list_unique_handle &&commandListImmediate)
+      : regularBatch(context, device,
+                     std::forward<v2::raii::command_list_unique_handle>(
+                         commandListRegular)),
+        immediateList(context, device,
+                      std::forward<v2::raii::command_list_unique_handle>(
+                          commandListImmediate)),
+        generation(0) {}
 };
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
@@ -62,13 +69,15 @@ private:
   ur_result_t renewBuffer();
 
   v2::raii::command_list_unique_handle getNewRegularCmdList() {
-    return hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
-                                                            regularCmdListDesc);
+    return hContext->getCommandListCache().getRegularCommandList(
+        hDevice->ZeDevice, regularCmdListDesc);
   }
 
   void runOldBatchRenewBatch();
 
-  
+  ur_event_handle_t createEventIfRequested(event_pool *eventPool,
+                                           ur_event_handle_t *phEvent,
+                                           ur_queue_t_ *queue);
 
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,

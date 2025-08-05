@@ -49,7 +49,9 @@ void event_pool::free(ur_event_handle_t event) {
   std::unique_lock<ur_mutex> lock(mutex);
 
   event->reset();
+  // TODO is it a good place to put it?
   freelist.push_back(event);
+  event->setBatch(-1);
 
   // The event is still in the pool, so we need to increment the refcount
   assert(event->RefCount.getCount() == 0);

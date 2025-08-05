@@ -29,14 +29,16 @@
 
 namespace v2 {
 
-// v2::raii::command_list_unique_handle ur_queue_batched_t::getNewRegularCmdList() {
-//   return hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
+// v2::raii::command_list_unique_handle
+// ur_queue_batched_t::getNewRegularCmdList() {
+//   return
+//   hContext->getCommandListCache().getRegularCommandList(hDevice->ZeDevice,
 //                                                             listDesc);
 // }
 
 // void ur_queue_batched_t::runOldBatchRenewBatch() {
 //   // enqueue command list
-//   auto lockedList = 
+//   auto lockedList =
 // }
 
 ur_queue_batched_t::ur_queue_batched_t(
@@ -64,13 +66,13 @@ ur_queue_batched_t::ur_queue_batched_t(
 
                   ,
                   true /* copyOffloadEnable*/, false /*isMutable*/}),
-                /* command list immediate*/
-                hContext->getCommandListCache().getImmediateCommandList(
+          /* command list immediate*/
+          hContext->getCommandListCache().getImmediateCommandList(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
               ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)
-                
-                ) {
+
+      ) {
   // {
   // TODO common code?
   if (!hContext->getPlatform()->ZeCommandListImmediateAppendExt.Supported) {
@@ -115,6 +117,21 @@ ur_queue_batched_t::ur_queue_batched_t(
   eventPoolRegular = hContext->getEventPoolCache(PoolCacheType::Regular)
                          .borrow(hDevice->Id.value(), v2::EVENT_FLAGS_COUNTER);
   // TODO make const? always copy? - function needs const
+}
+
+ur_event_handle_t createEventIfRequested(event_pool *eventPool,
+                                         ur_event_handle_t *phEvent,
+                                         ur_queue_t_ *queue,
+                                         int64_t batch_generation) {
+  if (phEvent == nullptr) {
+    return nullptr;
+  }
+
+  (*phEvent) = eventPool->allocate();
+  (*phEvent)->setQueue(queue);
+  (*phEvent)->setBatch(batch_generation);
+
+  return (*phEvent);
 }
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
