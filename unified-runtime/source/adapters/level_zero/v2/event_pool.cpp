@@ -49,7 +49,7 @@ void event_pool::free(ur_event_handle_t event) {
   std::unique_lock<ur_mutex> lock(mutex);
 
   event->reset();
-  // TODO is it a good place to put it?
+  // TODO is it a good place for it? Am I missing something?
   freelist.push_back(event);
   event->setBatch(-1);
 
