@@ -138,11 +138,19 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
   auto batchLocked = currentBatch.lock();
 
   if (batch_generation == batchLocked->generation) {
+    auto cmdlist = batchLocked->regularBatch.getZeCommandList();
     // run batch
-    batchLocked->immediateList.appendRegular(&batchLocked->regularBatch.getZeCommandList());
+    batchLocked->immediateList.appendRegular(&cmdlist);
+    // batchLocked->immediateList.appendRegular(&(batchLocked->regularBatch.getZeCommandList()));
   }
 
-  // else: it must be older and already run
+    // else: it must be older and already run
+
+
+  batchLocked->generation++;
+
+
+
 
   return UR_RESULT_SUCCESS;
 }
