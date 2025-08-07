@@ -78,6 +78,8 @@ private:
 
   void runOldBatchRenewBatch();
 
+  locked<Batch> renewRegular(locked<Batch> batchLocked);
+
   ur_event_handle_t createEventIfRequested(event_pool *eventPool,
                                            ur_event_handle_t *phEvent,
                                            ur_queue_t_ *queue, int64_t generation_number);

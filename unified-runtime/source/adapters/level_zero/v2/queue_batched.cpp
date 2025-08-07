@@ -136,6 +136,18 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPo
   return (*phEvent);
 }
 
+locked<Batch> ur_queue_batched_t::renewRegular(locked<Batch> batchLocked) {
+  batchLocked->generation++;
+
+  // TODO kosher?
+  // save regular for execution
+  //renew regular
+  runBatches.push_back(std::move(batchLocked->regularBatch));
+  batchLocked->regularBatch = ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
+
+  return batchLocked;
+}
+
 ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation) {
   auto batchLocked = currentBatch.lock();
 
@@ -240,19 +252,29 @@ ur_result_t ur_queue_batched_t::queueFinish() {
   try {
 
     // finish current batch
+    auto lockedBatches = currentBatch.lock();
+
+    auto cmdlist = lockedBatches->regularBatch.getZeCommandList();
+    ZE2UR_CALL(zeCommandListClose, (cmdlist));
+
+    // run current batch
+    lockedBatches->regularBatch.appendRegular(&cmdlist);
+
+
+
 
     // // finalize before enqueueing the command buffer
     // UR_CALL(commandBuffer->finalizeCommandBuffer());
 
     // // enqueue command buffer
-    auto lockedCommandListManager = commandListManagerImmediate.lock();
+    // auto lockedCommandListManager = commandListManagerImmediate.lock();
     // lockedCommandListManager->appendCommandBufferExp(
     //     commandBuffer, 0, nullptr,
     //     createEventAndRetain(eventPool.get(), nullptr, this));
 
     // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize,
-               (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
+               (lockedBatches->immediateList.getZeCommandList(), UINT64_MAX));
 
     hContext->getAsyncPool()->cleanupPoolsForQueue(this);
     hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
@@ -260,9 +282,13 @@ ur_result_t ur_queue_batched_t::queueFinish() {
       return true;
     });
 
-    UR_CALL(lockedCommandListManager->releaseSubmittedKernels());
+    UR_CALL(lockedBatches->immediateList.releaseSubmittedKernels());
 
-    return renewBuffer();
+    // return renewBuffer();
+    // TODO removingf double lock but looks unkosher
+    lockedBatches = renewRegular(std::move(lockedBatches));
+
+    return UR_RESULT_SUCCESS;
   } catch (...) {
     return exceptionToResult(std::current_exception());
   }
@@ -271,6 +297,7 @@ ur_result_t ur_queue_batched_t::queueFinish() {
 ur_queue_batched_t::~ur_queue_batched_t() {
   try {
     UR_CALL_THROWS(queueFinish());
+    // TODO regular is renewed, unnecessarily
     // delete commandBuffer;
   } catch (...) {
     // Ignore errors during destruction
