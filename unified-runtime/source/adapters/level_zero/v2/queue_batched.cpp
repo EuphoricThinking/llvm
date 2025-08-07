@@ -43,7 +43,8 @@ namespace v2 {
 //   auto lockedList =
 // }
 
-// TODO ordinal not needed? v2:: uint32_t getZeOrdinal(ur_device_handle_t hDevice)
+// TODO ordinal not needed? v2:: uint32_t getZeOrdinal(ur_device_handle_t
+// hDevice)
 ur_queue_batched_t::ur_queue_batched_t(
     ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
@@ -55,7 +56,7 @@ ur_queue_batched_t::ur_queue_batched_t(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
               ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
-              // TODO initialize desc
+      // TODO initialize desc
       currentBatch(
           hContext, hDevice,
           /* regular command list*/
@@ -121,10 +122,9 @@ ur_queue_batched_t::ur_queue_batched_t(
   // TODO make const? always copy? - function needs const
 }
 
-ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPool,
-                                         ur_event_handle_t *phEvent,
-                                         ur_queue_t_ *queue,
-                                         int64_t batch_generation) {
+ur_event_handle_t ur_queue_batched_t::createEventIfRequested(
+    event_pool *eventPool, ur_event_handle_t *phEvent, ur_queue_t_ *queue,
+    int64_t batch_generation) {
   if (phEvent == nullptr) {
     return nullptr;
   }
@@ -136,8 +136,10 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPo
   return (*phEvent);
 }
 
-ur_event_handle_t ur_queue_batched_t::createEventIfRequestedRegular(ur_event_handle_t *phEvent, int64_t batch_generation) {
-    if (phEvent == nullptr) {
+ur_event_handle_t
+ur_queue_batched_t::createEventIfRequestedRegular(ur_event_handle_t *phEvent,
+                                                  int64_t batch_generation) {
+  if (phEvent == nullptr) {
     return nullptr;
   }
 
@@ -153,14 +155,16 @@ locked<Batch> ur_queue_batched_t::renewRegular(locked<Batch> batchLocked) {
 
   // TODO kosher?
   // save regular for execution
-  //renew regular
+  // renew regular
   runBatches.push_back(std::move(batchLocked->regularBatch));
-  batchLocked->regularBatch = ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
+  batchLocked->regularBatch =
+      ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
 
   return batchLocked;
 }
 
-ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation) {
+ur_result_t
+ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation) {
   auto batchLocked = currentBatch.lock();
 
   if (batch_generation == batchLocked->generation) {
@@ -173,18 +177,16 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
     // batchLocked->immediateList.appendRegular(&(batchLocked->regularBatch.getZeCommandList()));
   }
 
-    // else: it must be older and already run
-
+  // else: it must be older and already run
 
   batchLocked->generation++;
 
   // TODO kosher?
   // save regular for execution
-  //renew regular
+  // renew regular
   runBatches.push_back(std::move(batchLocked->regularBatch));
-  batchLocked->regularBatch = ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
-
-
+  batchLocked->regularBatch =
+      ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
 
   return UR_RESULT_SUCCESS;
 }
@@ -201,14 +203,18 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 
   // // TODO add event handling
   // UR_CALL(commandListLocked->appendKernelLaunch(
-      // hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      // numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-      // phEventWaitList, nullptr));
+  // hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+  // numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
+  // phEventWaitList, nullptr));
 
   auto currentRegular = currentBatch.lock();
-      UR_CALL(currentRegular->regularBatch.appendKernelLaunch(hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+  UR_CALL(currentRegular->regularBatch.appendKernelLaunch(
+      hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
       numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-      phEventWaitList, ur_queue_batched_t::createEventIfRequested(eventPoolRegular.get(), phEvent, this, currentRegular->generation))); //nullptr));
+      phEventWaitList,
+      ur_queue_batched_t::createEventIfRequested(
+          eventPoolRegular.get(), phEvent, this,
+          currentRegular->generation))); // nullptr));
 
   return UR_RESULT_SUCCESS;
 }
@@ -272,9 +278,6 @@ ur_result_t ur_queue_batched_t::queueFinish() {
     // run current batch
     lockedBatches->regularBatch.appendRegular(&cmdlist);
 
-
-
-
     // // finalize before enqueueing the command buffer
     // UR_CALL(commandBuffer->finalizeCommandBuffer());
 
@@ -327,13 +330,14 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
 
       // // TODO add event handling
       // UR_CALL(commandListLocked->appendMemBufferRead(
-          // hBuffer, false, offset, size, pDst, numEventsInWaitList,
-          // phEventWaitList, nullptr));
+      // hBuffer, false, offset, size, pDst, numEventsInWaitList,
+      // phEventWaitList, nullptr));
       auto lockedBatches = currentBatch.lock();
       UR_CALL(lockedBatches->regularBatch.appendMemBufferRead(
-       hBuffer, false, offset, size, pDst, numEventsInWaitList,
-          phEventWaitList, createEventIfRequestedRegular( phEvent, lockedBatches->generation)));//nullptr));
-
+          hBuffer, false, offset, size, pDst, numEventsInWaitList,
+          phEventWaitList,
+          createEventIfRequestedRegular(
+              phEvent, lockedBatches->generation))); // nullptr));
     }
 
     if (blockingRead) {
@@ -363,16 +367,17 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     // auto fromPool = nullptr; // commandBuffer->poolMe();
 
     // UR_CALL(commandListLocked->appendMemBufferWrite(
-        // hBuffer, false, offset, size, pSrc, numEventsInWaitList,
-        // phEventWaitList, fromPool));
+    // hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+    // phEventWaitList, fromPool));
 
     auto lockedBatches = currentBatch.lock();
 
-
     // TODO create event if requested - pass only phEvent?
     UR_CALL(lockedBatches->regularBatch.appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
-        phEventWaitList, createEventIfRequested(eventPoolRegular.get(), phEvent, this, lockedBatches->generation)));
+        hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+        phEventWaitList,
+        createEventIfRequested(eventPoolRegular.get(), phEvent, this,
+                               lockedBatches->generation)));
   }
 
   if (blockingWrite) {

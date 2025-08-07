@@ -48,7 +48,7 @@ public:
                           commandListImmediate)),
         generation(0) {}
 
-friend class ur_queue_batched_t;
+  friend class ur_queue_batched_t;
 };
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
@@ -82,11 +82,11 @@ private:
 
   ur_event_handle_t createEventIfRequested(event_pool *eventPool,
                                            ur_event_handle_t *phEvent,
-                                           ur_queue_t_ *queue, int64_t generation_number);
+                                           ur_queue_t_ *queue,
+                                           int64_t generation_number);
 
-    ur_event_handle_t createEventIfRequestedRegular(
-                                           ur_event_handle_t *phEvent,
-                                            int64_t generation_number);
+  ur_event_handle_t createEventIfRequestedRegular(ur_event_handle_t *phEvent,
+                                                  int64_t generation_number);
 
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
@@ -94,7 +94,7 @@ public:
                      std::optional<int32_t> index, event_flags_t eventFlags,
                      ur_queue_flags_t flags);
 
-                     ur_result_t runBatchIfCurrentBatch(int64_t batch_generation) override;
+  ur_result_t runBatchIfCurrentBatch(int64_t batch_generation) override;
   // ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t
   // ordinal,
   //                      ze_command_queue_priority_t priority,
@@ -121,7 +121,8 @@ public:
   //         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize,
   //         pLocalWorkSize, numPropsInLaunchPropList, launchPropList,
   //         numEventsInWaitList, phEventWaitList,
-  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //         -1));
   //   }
   ur_result_t
   enqueueEventsWaitWithBarrier(uint32_t numEventsInWaitList,
@@ -153,7 +154,8 @@ public:
   //     return commandListManagerImmediate.lock()->appendMemBufferRead(
   //         hBuffer, blockingRead, offset, size, pDst, numEventsInWaitList,
   //         phEventWaitList,
-  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //         -1));
   //   }
 
   ur_result_t enqueueMemBufferWrite(ur_mem_handle_t hBuffer, bool blockingWrite,
@@ -166,7 +168,8 @@ public:
   //     return commandListManagerImmediate.lock()->appendMemBufferWrite(
   //         hBuffer, blockingWrite, offset, size, pSrc, numEventsInWaitList,
   //         phEventWaitList,
-  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //         -1));
   //   }
 
   ur_result_t enqueueMemBufferReadRect(
@@ -408,7 +411,8 @@ public:
       void **ppMem, ur_event_handle_t *phEvent) override {
     return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+        ppMem,
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
         UR_USM_TYPE_DEVICE);
   }
 
@@ -419,7 +423,8 @@ public:
       void **ppMem, ur_event_handle_t *phEvent) override {
     return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+        ppMem,
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
         UR_USM_TYPE_SHARED);
   }
 
@@ -431,7 +436,8 @@ public:
                          ur_event_handle_t *phEvent) override {
     return commandListManagerImmediate.lock()->appendUSMAllocHelper(
         this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-        ppMem, createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+        ppMem,
+        createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
         UR_USM_TYPE_HOST);
   }
 
@@ -469,7 +475,8 @@ public:
         ->bindlessImagesWaitExternalSemaphoreExp(
             hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
             phEventWaitList,
-            createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+            createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+                                   -1));
   }
 
   ur_result_t bindlessImagesSignalExternalSemaphoreExp(
@@ -481,7 +488,8 @@ public:
         ->bindlessImagesSignalExternalSemaphoreExp(
             hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
             phEventWaitList,
-            createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+            createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+                                   -1));
   }
 
   ur_result_t
