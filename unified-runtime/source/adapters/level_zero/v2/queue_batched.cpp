@@ -136,6 +136,18 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequested(event_pool *eventPo
   return (*phEvent);
 }
 
+ur_event_handle_t ur_queue_batched_t::createEventIfRequestedRegular(ur_event_handle_t *phEvent, int64_t batch_generation) {
+    if (phEvent == nullptr) {
+    return nullptr;
+  }
+
+  (*phEvent) = eventPoolRegular->allocate();
+  (*phEvent)->setQueue(this);
+  (*phEvent)->setBatch(batch_generation);
+
+  return (*phEvent);
+}
+
 locked<Batch> ur_queue_batched_t::renewRegular(locked<Batch> batchLocked) {
   batchLocked->generation++;
 
@@ -311,12 +323,17 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
   try {
     // TODO remove double lock acquisition
     {
-      auto commandListLocked = commandListManagerCurrentRegular->lock();
+      // auto commandListLocked = commandListManagerCurrentRegular->lock();
 
-      // TODO add event handling
-      UR_CALL(commandListLocked->appendMemBufferRead(
-          hBuffer, false, offset, size, pDst, numEventsInWaitList,
-          phEventWaitList, nullptr));
+      // // TODO add event handling
+      // UR_CALL(commandListLocked->appendMemBufferRead(
+          // hBuffer, false, offset, size, pDst, numEventsInWaitList,
+          // phEventWaitList, nullptr));
+      auto lockedBatches = currentBatch.lock();
+      UR_CALL(lockedBatches->regularBatch.appendMemBufferRead(
+       hBuffer, false, offset, size, pDst, numEventsInWaitList,
+          phEventWaitList, createEventIfRequestedRegular( phEvent, lockedBatches->generation)));//nullptr));
+
     }
 
     if (blockingRead) {
@@ -340,14 +357,22 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
 
   // TODO remove double lock acquisition
   {
-    auto commandListLocked = commandListManagerCurrentRegular->lock();
+    // auto commandListLocked = commandListManagerCurrentRegular->lock();
 
-    // TODO placeholder
-    auto fromPool = nullptr; // commandBuffer->poolMe();
+    // // TODO placeholder
+    // auto fromPool = nullptr; // commandBuffer->poolMe();
 
-    UR_CALL(commandListLocked->appendMemBufferWrite(
-        hBuffer, false, offset, size, pSrc, numEventsInWaitList,
-        phEventWaitList, fromPool));
+    // UR_CALL(commandListLocked->appendMemBufferWrite(
+        // hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+        // phEventWaitList, fromPool));
+
+    auto lockedBatches = currentBatch.lock();
+
+
+    // TODO create event if requested - pass only phEvent?
+    UR_CALL(lockedBatches->regularBatch.appendMemBufferWrite(
+      hBuffer, false, offset, size, pSrc, numEventsInWaitList,
+        phEventWaitList, createEventIfRequested(eventPoolRegular.get(), phEvent, this, lockedBatches->generation)));
   }
 
   if (blockingWrite) {

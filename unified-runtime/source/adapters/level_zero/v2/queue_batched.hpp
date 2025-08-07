@@ -84,6 +84,10 @@ private:
                                            ur_event_handle_t *phEvent,
                                            ur_queue_t_ *queue, int64_t generation_number);
 
+    ur_event_handle_t createEventIfRequestedRegular(
+                                           ur_event_handle_t *phEvent,
+                                            int64_t generation_number);
+
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
                      ze_command_queue_priority_t priority,
