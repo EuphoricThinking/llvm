@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "queue_batched.hpp"
+#include "adapters/level_zero/common.hpp"
 #include "adapters/level_zero/v2/command_list_cache.hpp"
 #include "adapters/level_zero/v2/command_list_manager.hpp"
 #include "adapters/level_zero/v2/lockable.hpp"
@@ -24,6 +25,7 @@
 #include "../program.hpp"
 #include "../ur_interface_loader.hpp"
 #include "ur_api.h"
+#include "ze_api.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -139,6 +141,8 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
 
   if (batch_generation == batchLocked->generation) {
     auto cmdlist = batchLocked->regularBatch.getZeCommandList();
+
+    ZE2UR_CALL(zeCommandListClose, (cmdlist));
     // run batch
     batchLocked->immediateList.appendRegular(&cmdlist);
     // batchLocked->immediateList.appendRegular(&(batchLocked->regularBatch.getZeCommandList()));
@@ -233,6 +237,8 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 
 ur_result_t ur_queue_batched_t::queueFinish() {
   try {
+
+    // finish current batch
 
     // // finalize before enqueueing the command buffer
     // UR_CALL(commandBuffer->finalizeCommandBuffer());
