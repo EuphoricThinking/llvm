@@ -142,6 +142,7 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
   if (batch_generation == batchLocked->generation) {
     auto cmdlist = batchLocked->regularBatch.getZeCommandList();
 
+    // no syncpoints to synchronize
     ZE2UR_CALL(zeCommandListClose, (cmdlist));
     // run batch
     batchLocked->immediateList.appendRegular(&cmdlist);
