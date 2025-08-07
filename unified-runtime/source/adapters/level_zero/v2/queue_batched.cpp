@@ -149,6 +149,11 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(int64_t batch_generation)
 
   batchLocked->generation++;
 
+  // TODO kosher?
+  // save regular for execution
+  //renew regular
+  runBatches.push_back(std::move(batchLocked->regularBatch));
+  batchLocked->regularBatch = ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
 
 
 
