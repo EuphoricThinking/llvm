@@ -31,11 +31,12 @@
 namespace v2 {
 
 struct Batch {
-public:
+private:
   ur_command_list_manager regularBatch;
   ur_command_list_manager immediateList;
   int64_t generation;
 
+public:
   Batch(ur_context_handle_t context, ur_device_handle_t device,
         v2::raii::command_list_unique_handle &&commandListRegular,
         v2::raii::command_list_unique_handle &&commandListImmediate)
@@ -46,6 +47,8 @@ public:
                       std::forward<v2::raii::command_list_unique_handle>(
                           commandListImmediate)),
         generation(0) {}
+
+friend class ur_queue_batched_t;
 };
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
