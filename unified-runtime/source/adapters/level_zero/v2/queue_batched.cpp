@@ -168,13 +168,18 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
-  auto commandListLocked = commandListManagerCurrentRegular->lock();
+  // auto commandListLocked = commandListManagerCurrentRegular->lock();
 
-  // TODO add event handling
-  UR_CALL(commandListLocked->appendKernelLaunch(
-      hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+  // // TODO add event handling
+  // UR_CALL(commandListLocked->appendKernelLaunch(
+      // hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
+      // numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
+      // phEventWaitList, nullptr));
+
+  auto currentRegular = currentBatch.lock();
+      UR_CALL(currentRegular->regularBatch.appendKernelLaunch(hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
       numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-      phEventWaitList, nullptr));
+      phEventWaitList, ur_queue_batched_t::createEventIfRequested(eventPoolRegular.get(), phEvent, this, currentRegular->generation))); //nullptr));
 
   return UR_RESULT_SUCCESS;
 }
