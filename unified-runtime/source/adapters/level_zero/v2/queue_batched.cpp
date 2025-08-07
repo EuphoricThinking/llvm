@@ -41,6 +41,7 @@ namespace v2 {
 //   auto lockedList =
 // }
 
+// TODO ordinal not needed? v2:: uint32_t getZeOrdinal(ur_device_handle_t hDevice)
 ur_queue_batched_t::ur_queue_batched_t(
     ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
@@ -52,6 +53,7 @@ ur_queue_batched_t::ur_queue_batched_t(
               hDevice->ZeDevice,
               {true, ordinal, true /* always enable copy offload */},
               ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, priority, index)),
+              // TODO initialize desc
       currentBatch(
           hContext, hDevice,
           /* regular command list*/
@@ -62,9 +64,7 @@ ur_queue_batched_t::ur_queue_batched_t(
                   (uint32_t)hDevice
                       ->QueueGroup[ur_device_handle_t_::queue_group_info_t::
                                        type::Compute]
-                      .ZeOrdinal /* Ordinal*/
-
-                  ,
+                      .ZeOrdinal /* Ordinal*/,
                   true /* copyOffloadEnable*/, false /*isMutable*/}),
           /* command list immediate*/
           hContext->getCommandListCache().getImmediateCommandList(
