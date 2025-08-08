@@ -272,11 +272,11 @@ ur_result_t ur_queue_batched_t::queueFinish() {
     // finish current batch
     auto lockedBatches = currentBatch.lock();
 
-    auto cmdlist = lockedBatches->regularBatch.getZeCommandList();
+    ze_command_list_handle_t cmdlist = lockedBatches->regularBatch.getZeCommandList();
     ZE2UR_CALL(zeCommandListClose, (cmdlist));
 
     // run current batch
-    lockedBatches->regularBatch.appendRegular(&cmdlist);
+    lockedBatches->immediateList.appendRegular(&cmdlist);
 
     // // finalize before enqueueing the command buffer
     // UR_CALL(commandBuffer->finalizeCommandBuffer());
@@ -473,6 +473,7 @@ ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
   // }
 
   // return renewBuffer();
+  return UR_RESULT_SUCCESS;
 }
 
 } // namespace v2
