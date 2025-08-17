@@ -63,7 +63,7 @@ ur_queue_batched_t::ur_queue_batched_t(
   this->hContext = hContext;
   this->hDevice = hDevice;
 
-  runBatches = std::vector<ur_command_list_manager>();
+  runBatches = std::vector<v2::raii::command_list_unique_handle>();
   runBatches.reserve(default_num_batches);
 
   this->flags = flags;
@@ -86,9 +86,8 @@ locked<Batch> ur_queue_batched_t::renewRegular(locked<Batch> batchLocked) {
   // TODO replace with unlocked functions
   // save regular for execution
   // renew regular
-  runBatches.push_back(std::move(batchLocked->regularBatch));
-  batchLocked->regularBatch =
-      ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
+  runBatches.push_back( batchLocked->regularBatch.releaseCommandList()); //std::move(batchLocked->regularBatch));
+  batchLocked->regularBatch.replaceCommandList(getNewRegularCmdList()); 
 
   return batchLocked;
 }
@@ -114,9 +113,11 @@ ur_result_t ur_queue_batched_t::runBatchIfCurrentBatch(
   // TODO std::optional
   // save regular for execution
   // renew regular
-  runBatches.push_back(std::move(batchLocked->regularBatch));
-  batchLocked->regularBatch =
-      ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
+  runBatches.push_back( batchLocked->regularBatch.releaseCommandList()); //std::move(batchLocked->regularBatch));
+  batchLocked->regularBatch.replaceCommandList(getNewRegularCmdList()); 
+  
+  // =
+      // ur_command_list_manager(hContext, hDevice, getNewRegularCmdList());
 
   return UR_RESULT_SUCCESS;
 }

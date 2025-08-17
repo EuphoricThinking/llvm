@@ -233,6 +233,10 @@ struct ur_command_list_manager {
 
   ur_result_t appendRegular(ze_command_list_handle_t *phCommandLists);
 
+  v2::raii::command_list_unique_handle&& releaseCommandList();
+
+  void replaceCommandList(v2::raii::command_list_unique_handle&& cmdlist);
+
 private:
   ur_result_t appendGenericCommandListsExp(
       uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,

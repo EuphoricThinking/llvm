@@ -12,10 +12,12 @@
 #include "../helpers/kernel_helpers.hpp"
 #include "../helpers/memory_helpers.hpp"
 #include "../ur_interface_loader.hpp"
+#include "adapters/level_zero/v2/command_list_cache.hpp"
 #include "command_buffer.hpp"
 #include "context.hpp"
 #include "kernel.hpp"
 #include "memory.hpp"
+#include "ur_api.h"
 
 ur_command_list_manager::ur_command_list_manager(
     ur_context_handle_t context, ur_device_handle_t device,
@@ -60,6 +62,16 @@ ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
 
   return UR_RESULT_SUCCESS;
 }
+
+v2::raii::command_list_unique_handle&& ur_command_list_manager::releaseCommandList() {
+  return std::move(zeCommandList);
+}
+
+void ur_command_list_manager::replaceCommandList(v2::raii::command_list_unique_handle &&cmdlist) {
+  zeCommandList = std::move(cmdlist);
+}
+
+
 
 ur_result_t ur_command_list_manager::appendGenericCopyUnlocked(
     ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking, size_t srcOffset,

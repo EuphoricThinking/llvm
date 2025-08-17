@@ -13,6 +13,7 @@
 #include "../common.hpp"
 #include "../device.hpp"
 
+#include "adapters/level_zero/v2/command_list_cache.hpp"
 #include "common/ur_ref_count.hpp"
 #include "context.hpp"
 #include "event.hpp"
@@ -58,7 +59,7 @@ private:
 
   v2::command_list_desc_t regularCmdListDesc;
   lockable<Batch> currentBatch;
-  std::vector<ur_command_list_manager> runBatches;
+  std::vector<v2::raii::command_list_unique_handle> runBatches;
 
   ur_queue_flags_t flags;
   v2::raii::cache_borrowed_event_pool eventPoolRegular;
@@ -71,12 +72,6 @@ private:
   void runOldBatchRenewBatch();
 
   locked<Batch> renewRegular(locked<Batch> batchLocked);
-
-  // ur_event_handle_t createEventIfRequested(event_pool *eventPool,
-  //                                          ur_event_handle_t *phEvent,
-  //                                          ur_queue_t_ *queue,
-  //                                          ur_event_generation_t
-  //                                          generation_number);
 
   ur_event_handle_t
   createEventIfRequestedRegular(ur_event_handle_t *phEvent,
