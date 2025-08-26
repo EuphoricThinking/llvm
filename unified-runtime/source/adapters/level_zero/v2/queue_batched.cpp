@@ -87,6 +87,12 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequestedRegular(
   return (*phEvent);
 }
 
+ur_result_t ur_queue_batched_t::renewRegular() {
+  auto lockedBatches = currentCmdLists.lock();
+
+  return renewRegularUnlocked(lockedBatches);
+}
+
 ur_result_t
 ur_queue_batched_t::renewRegularUnlocked(locked<batch_manager> &batchLocked) {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::renewRegularUnlocked");
@@ -174,8 +180,7 @@ ur_result_t ur_queue_batched_t::queueFinishBatchAndPoolsUnlocked(
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_batched_t::queueFinishBatchAndPoolsUnlocked_hostSynchronize");
-    TRACK_SCOPE_LATENCY(
-        "ur_queue_batched_t::hostSynchronize");
+    TRACK_SCOPE_LATENCY("ur_queue_batched_t::hostSynchronize");
     // finish queue
     ZE2UR_CALL(zeCommandListHostSynchronize, (immediateList, UINT64_MAX));
   }
@@ -183,8 +188,7 @@ ur_result_t ur_queue_batched_t::queueFinishBatchAndPoolsUnlocked(
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_batched_t::queueFinishBatchAndPoolsUnlocked_asyncPools");
-    TRACK_SCOPE_LATENCY(
-        "ur_queue_batched_t::asyncPools");
+    TRACK_SCOPE_LATENCY("ur_queue_batched_t::asyncPools");
     hContext->getAsyncPool()->cleanupPoolsForQueue(this);
     hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
       hPool->cleanupPoolsForQueue(this);
@@ -207,8 +211,7 @@ ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_batched_t::queueFinishUnlocked_releaseSubmittedKernels");
-    TRACK_SCOPE_LATENCY(
-        "ur_queue_batched_t::releaseSubmittedKernels");
+    TRACK_SCOPE_LATENCY("ur_queue_batched_t::releaseSubmittedKernels");
     UR_CALL(batchLocked->immediateList.releaseSubmittedKernels());
   }
 
@@ -273,7 +276,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
         createEventIfRequestedRegular(
             phEvent, lockedBatches->regularGenerationNumber))); // nullptr));
 
-            // printf("before blocking read\n");
+    // printf("before blocking read\n");
     if (blockingRead) {
       UR_CALL_THROWS(queueFinishUnlocked(lockedBatches));
     }
@@ -308,7 +311,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
       createEventIfRequestedRegular(phEvent,
                                     lockedBatches->regularGenerationNumber)));
 
-                                    // printf("before blocking write\n");
+  // printf("before blocking write\n");
   if (blockingWrite) {
     UR_CALL_THROWS(queueFinishUnlocked(lockedBatches));
   }
@@ -387,6 +390,13 @@ ur_queue_batched_t::queueGetNativeHandle(ur_queue_native_desc_t * /*pDesc*/,
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_queue_batched_t::queueFlush() { return UR_RESULT_SUCCESS; }
+ur_result_t ur_queue_batched_t::queueFlush() {
+  auto batchLocked = currentCmdLists.lock();
+  UR_CALL(
+      enqueueCurrentBatchUnlocked(batchLocked->immediateList.getZeCommandList(),
+                                  batchLocked->activeBatch.getZeCommandList()));
+
+  return renewRegularUnlocked(batchLocked);
+}
 
 } // namespace v2
