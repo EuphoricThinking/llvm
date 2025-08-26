@@ -250,6 +250,7 @@ ur_result_t urEventRelease(ur_event_handle_t hEvent) try {
 ur_result_t urEventWait(uint32_t numEvents,
                         const ur_event_handle_t *phEventWaitList) try {
   for (uint32_t i = 0; i < numEvents; ++i) {
+    phEventWaitList[i]->runBatch();
     ZE2UR_CALL(zeEventHostSynchronize,
                (phEventWaitList[i]->getZeEvent(), UINT64_MAX));
   }
