@@ -263,6 +263,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
     void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
+    // printf("I ENTER READ\n");
     TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
 
     auto lockedBatches = currentCmdLists.lock();
@@ -272,9 +273,12 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
         createEventIfRequestedRegular(
             phEvent, lockedBatches->regularGenerationNumber))); // nullptr));
 
+            // printf("before blocking read\n");
     if (blockingRead) {
       UR_CALL_THROWS(queueFinishUnlocked(lockedBatches));
     }
+
+    // printf("after blocking read\n");
 
     return UR_RESULT_SUCCESS;
   } catch (...) {
@@ -295,6 +299,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
 
   // -------------- end of not my comment ---------------------
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferWrite");
+  // printf("I ENTER WRITE\n");
 
   auto lockedBatches = currentCmdLists.lock();
 
@@ -303,10 +308,12 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
       createEventIfRequestedRegular(phEvent,
                                     lockedBatches->regularGenerationNumber)));
 
+                                    // printf("before blocking write\n");
   if (blockingWrite) {
     UR_CALL_THROWS(queueFinishUnlocked(lockedBatches));
   }
 
+  // printf("after blocking write\n");
   return UR_RESULT_SUCCESS;
 } catch (...) {
   return exceptionToResult(std::current_exception());
