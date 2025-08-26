@@ -132,7 +132,10 @@ public:
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
-    return UR_RESULT_ERROR_INVALID_VALUE;
+    auto lockedBatch = currentCmdLists.lock();
+    return lockedBatch->activeBatch.appendEventsWait( numEventsInWaitList, phEventWaitList,
+        createEventIfRequestedRegular(phEvent,lockedBatch->regularGenerationNumber));
+    // return UR_RESULT_ERROR_INVALID_VALUE;
     // return commandListManagerImmediate.lock()->appendEventsWait(
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
@@ -210,11 +213,12 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendMemBufferCopy(
-    //     hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
+    auto lockedBatch = currentCmdLists.lock();
+    return lockedBatch->activeBatch.appendMemBufferCopy(
+        hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
+        numEventsInWaitList, phEventWaitList,
+        createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
+    // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
   ur_result_t enqueueMemBufferCopyRect(
@@ -325,10 +329,11 @@ public:
                                size_t size, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendUSMMemcpy(
-    //     blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
+    auto lockedBatch = currentCmdLists.lock();
+    return lockedBatch->activeBatch.appendUSMMemcpy(
+        blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
+        createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
+    // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
   ur_result_t enqueueUSMFill2D(void *pMem, size_t pitch, size_t patternSize,
