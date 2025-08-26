@@ -108,8 +108,7 @@ ur_result_t ur_queue_immediate_in_order_t::queueFinish() {
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_immediate_in_order_t::queueFinish_hostSynchronize");
-    TRACK_SCOPE_LATENCY(
-        "ur_queue_immediate_in_order_t::hostSynchronize");
+    TRACK_SCOPE_LATENCY("ur_queue_immediate_in_order_t::hostSynchronize");
     ZE2UR_CALL(zeCommandListHostSynchronize,
                (lockedCommandListManager->getZeCommandList(), UINT64_MAX));
   }
@@ -117,8 +116,7 @@ ur_result_t ur_queue_immediate_in_order_t::queueFinish() {
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_immediate_in_order_t::queueFinish_asyncPools");
-    TRACK_SCOPE_LATENCY(
-        "ur_queue_immediate_in_order_t::asyncPools");
+    TRACK_SCOPE_LATENCY("ur_queue_immediate_in_order_t::asyncPools");
     hContext->getAsyncPool()->cleanupPoolsForQueue(this);
     hContext->forEachUsmPool([this](ur_usm_pool_handle_t hPool) {
       hPool->cleanupPoolsForQueue(this);
