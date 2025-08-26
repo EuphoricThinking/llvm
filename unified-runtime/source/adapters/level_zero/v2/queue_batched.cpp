@@ -322,6 +322,45 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
   return exceptionToResult(std::current_exception());
 }
 
+ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableWrite(
+    ur_program_handle_t hProgram, const char *name, bool blockingWrite,
+    size_t count, size_t offset, const void *pSrc, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->activeBatch.appendDeviceGlobalVariableWrite(
+      hProgram, name, false, count, offset, pSrc, numEventsInWaitList,
+      phEventWaitList,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber)));
+
+  if (blockingWrite) {
+    UR_CALL_THROWS(queueFinishUnlocked(lockedBatch));
+  }
+  // return UR_RESULT_ERROR_INVALID_VALUE;
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableRead(
+    ur_program_handle_t hProgram, const char *name, bool blockingRead,
+    size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  auto lockedBatch = currentCmdLists.lock();
+
+  lockedBatch->activeBatch.appendDeviceGlobalVariableRead(
+      hProgram, name, blockingRead, count, offset, pDst, numEventsInWaitList,
+      phEventWaitList,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber));
+  // return UR_RESULT_ERROR_INVALID_VALUE;
+
+  if (blockingRead) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
 ur_result_t ur_queue_batched_t::enqueueMemBufferFill(
     ur_mem_handle_t hBuffer, const void *pPattern, size_t patternSize,
     size_t offset, size_t size, uint32_t numEventsInWaitList,
