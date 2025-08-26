@@ -379,6 +379,23 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferFill(
   return exceptionToResult(std::current_exception());
 }
 
+ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
+    bool blocking, void *pDst, const void *pSrc, size_t size,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  auto lockedBatch = currentCmdLists.lock();
+  lockedBatch->activeBatch.appendUSMMemcpy(
+      blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber));
+
+  if (blocking) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
 // from in_order.cpp
 
 ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,

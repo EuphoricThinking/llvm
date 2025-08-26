@@ -560,10 +560,13 @@ TEST_P(urEnqueueKernelLaunchWithVirtualMemory, Success) {
                                        nullptr, &kernel_evt));
 
   std::vector<uint32_t> data(global_size);
+  printf("bef memcpy\n");
   ASSERT_SUCCESS(urEnqueueUSMMemcpy(queue, true, data.data(), virtual_ptr,
                                     alloc_size, 1, &kernel_evt, nullptr));
+  printf("after memcpy\n");
 
   ASSERT_SUCCESS(urQueueFinish(queue));
+  printf("after queueFinish");
 
   // verify fill worked
   for (size_t i = 0; i < data.size(); i++) {
