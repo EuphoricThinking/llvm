@@ -133,8 +133,10 @@ public:
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
     auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->activeBatch.appendEventsWait( numEventsInWaitList, phEventWaitList,
-        createEventIfRequestedRegular(phEvent,lockedBatch->regularGenerationNumber));
+    return lockedBatch->activeBatch.appendEventsWait(
+        numEventsInWaitList, phEventWaitList,
+        createEventIfRequestedRegular(phEvent,
+                                      lockedBatch->regularGenerationNumber));
     // return UR_RESULT_ERROR_INVALID_VALUE;
     // return commandListManagerImmediate.lock()->appendEventsWait(
     //     numEventsInWaitList, phEventWaitList,
@@ -215,9 +217,10 @@ public:
                                    ur_event_handle_t *phEvent) override {
     auto lockedBatch = currentCmdLists.lock();
     return lockedBatch->activeBatch.appendMemBufferCopy(
-        hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
-        numEventsInWaitList, phEventWaitList,
-        createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
+        hBufferSrc, hBufferDst, srcOffset, dstOffset, size, numEventsInWaitList,
+        phEventWaitList,
+        createEventIfRequestedRegular(phEvent,
+                                      lockedBatch->regularGenerationNumber));
     // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
@@ -332,7 +335,8 @@ public:
     auto lockedBatch = currentCmdLists.lock();
     return lockedBatch->activeBatch.appendUSMMemcpy(
         blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
-        createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
+        createEventIfRequestedRegular(phEvent,
+                                      lockedBatch->regularGenerationNumber));
     // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
@@ -385,27 +389,13 @@ public:
       ur_program_handle_t hProgram, const char *name, bool blockingWrite,
       size_t count, size_t offset, const void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return
-    // commandListManagerImmediate.lock()->appendDeviceGlobalVariableWrite(
-    //     hProgram, name, blockingWrite, count, offset, pSrc,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override;
 
   ur_result_t enqueueDeviceGlobalVariableRead(
       ur_program_handle_t hProgram, const char *name, bool blockingRead,
       size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return
-    // commandListManagerImmediate.lock()->appendDeviceGlobalVariableRead(
-    //     hProgram, name, blockingRead, count, offset, pDst,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override;
 
   ur_result_t enqueueReadHostPipe(ur_program_handle_t hProgram,
                                   const char *pipe_symbol, bool blocking,
