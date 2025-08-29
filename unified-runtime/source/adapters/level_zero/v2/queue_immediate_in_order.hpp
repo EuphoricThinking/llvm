@@ -96,8 +96,9 @@ public:
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendMemBufferRead(
-        hBuffer, blockingRead, offset, size, pDst, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hBuffer, blockingRead, offset, size, pDst,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
