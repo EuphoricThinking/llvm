@@ -24,13 +24,13 @@ struct wait_list_view {
   uint32_t num;
   uint32_t max_size;
 
-//   wait_list_view(ze_event_handle_t *handles, uint32_t num)
-//      : handles(num > 0 ? handles : nullptr), num(num) {}
+  //   wait_list_view(ze_event_handle_t *handles, uint32_t num)
+  //      : handles(num > 0 ? handles : nullptr), num(num) {}
 
-    wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents);
-     // : handles(num > 0 ? handles : nullptr), num(num) {}
+  wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents);
+  // : handles(num > 0 ? handles : nullptr), num(num) {}
 
-    void addAdditionalEvent(ur_event_handle_t additionalEvent);
+  void addAdditionalEvent(ur_event_handle_t additionalEvent);
 
   operator bool() const {
     assert((handles != nullptr) == (num > 0));
@@ -103,11 +103,12 @@ struct ur_command_list_manager {
       ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
       size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
-  ur_result_t appendMemBufferFill(ur_mem_handle_t hBuffer, const void *pPattern,
-                                  size_t patternSize, size_t offset,
-                                  size_t size, uint32_t numEventsInWaitList,
-                                  const ur_event_handle_t *phEventWaitList,
-                                  ur_event_handle_t phEvent);
+  ur_result_t
+  appendMemBufferFill(ur_mem_handle_t hBuffer, const void *pPattern,
+                      size_t patternSize, size_t offset, size_t size,
+                      wait_list_view waitListView, /* uint32_t
+          numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+                      ur_event_handle_t phEvent);
   ur_result_t appendMemImageRead(ur_mem_handle_t hImage, bool blockingRead,
                                  ur_rect_offset_t origin,
                                  ur_rect_region_t region, size_t rowPitch,
@@ -139,8 +140,9 @@ struct ur_command_list_manager {
                              ur_event_handle_t phEvent);
   ur_result_t appendUSMFill(void *pMem, size_t patternSize,
                             const void *pPattern, size_t size,
-                            uint32_t numEventsInWaitList,
-                            const ur_event_handle_t *phEventWaitList,
+                            wait_list_view waitListView,
+                            /* uint32_t numEventsInWaitList,
+                            const ur_event_handle_t *phEventWaitList, */
                             ur_event_handle_t phEvent);
   ur_result_t appendUSMMemcpy(bool blocking, void *pDst, const void *pSrc,
                               size_t size, uint32_t numEventsInWaitList,
@@ -264,11 +266,13 @@ private:
       const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
       bool cooperative);
 
-  ur_result_t appendGenericFillUnlocked(
-      ur_mem_buffer_t *hBuffer, size_t offset, size_t patternSize,
-      const void *pPattern, size_t size, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
-      ur_command_t commandType);
+  ur_result_t appendGenericFillUnlocked(ur_mem_buffer_t *hBuffer, size_t offset,
+                                        size_t patternSize,
+                                        const void *pPattern, size_t size,
+                                        wait_list_view waitListView, /*uint32_t
+     numEventsInWaitList, const ur_event_handle_t *phEventWaitList,*/
+                                        ur_event_handle_t phEvent,
+                                        ur_command_t commandType);
 
   ur_result_t appendGenericCopyUnlocked(
       ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking,

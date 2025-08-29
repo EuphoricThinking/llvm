@@ -366,11 +366,12 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferFill(
     size_t offset, size_t size, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferFill");
+  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
 
   auto lockedBatch = currentCmdLists.lock();
   UR_CALL(lockedBatch->activeBatch.appendMemBufferFill(
-      hBuffer, pPattern, patternSize, offset, size, numEventsInWaitList,
-      phEventWaitList,
+      hBuffer, pPattern, patternSize, offset, size, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber)));
 
@@ -383,7 +384,7 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
     bool blocking, void *pDst, const void *pSrc, size_t size,
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
-      printf("memcpy batched\n");
+  printf("memcpy batched\n");
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
       blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
