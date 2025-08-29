@@ -16,6 +16,24 @@
 #include "context.hpp"
 #include "kernel.hpp"
 #include "memory.hpp"
+#include <cassert>
+
+
+wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents) {
+  num = numWaitEvents;
+  max_size = num + 1;
+
+
+}
+
+void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
+  if (additionalEvent) {
+    assert(num != max_size);
+
+    handles[num] = additionalEvent->getZeEvent();
+    num++;
+  }
+}
 
 ur_command_list_manager::ur_command_list_manager(
     ur_context_handle_t context, ur_device_handle_t device,
@@ -145,7 +163,12 @@ wait_list_view ur_command_list_manager::getWaitListView(
   if (additionalWaitEvent != nullptr) {
     waitList[totalNumWaitEvents - 1] = additionalWaitEvent->getZeEvent();
   }
-  return {waitList.data(), static_cast<uint32_t>(totalNumWaitEvents)};
+
+  wait_list_view waitlist = wait_list_view(phWaitEvents, numWaitEvents);
+  waitlist.addAdditionalEvent(additionalWaitEvent);
+
+  return waitlist;
+  // return {waitList.data(), static_cast<uint32_t>(totalNumWaitEvents)};
 }
 
 ze_event_handle_t
@@ -251,7 +274,7 @@ ur_result_t ur_command_list_manager::appendUSMMemcpy(
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMMemcpy");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_MEMCPY);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendMemoryCopy,
@@ -300,7 +323,7 @@ ur_result_t ur_command_list_manager::appendUSMPrefetch(
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMPrefetch");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_PREFETCH);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
@@ -327,7 +350,7 @@ ur_result_t ur_command_list_manager::appendUSMAdvise(
   auto zeAdvice = ur_cast<ze_memory_advice_t>(advice);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_ADVISE);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
@@ -491,7 +514,7 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
     return UR_RESULT_ERROR_INVALID_NULL_HANDLE;
   }
 
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   phEvent->recordStartTimestamp();
@@ -518,7 +541,7 @@ ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendGenericCommandListsExp");
 
   auto zeSignalEvent = getSignalEvent(phEvent, callerCommand);
-  auto [pWaitEvents, numWaitEvents] = getWaitListView(
+  auto [pWaitEvents, numWaitEvents, _] = getWaitListView(
       phEventWaitList, numEventsInWaitList, additionalWaitEvent);
 
   ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
@@ -822,7 +845,7 @@ ur_result_t ur_command_list_manager::appendUSMAllocHelper(
   }
 
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  auto [pWaitEvents, numWaitEvents] = waitListView;
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
 
   if (numWaitEvents > 0) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -847,7 +870,7 @@ ur_result_t ur_command_list_manager::appendUSMFreeExp(
   assert(phEvent);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_ENQUEUE_USM_FREE_EXP);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   umf_memory_pool_handle_t hPool = nullptr;
@@ -946,7 +969,7 @@ ur_result_t ur_command_list_manager::appendEventsWait(
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendEventsWait");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (numWaitEvents > 0) {
@@ -969,7 +992,7 @@ ur_result_t ur_command_list_manager::appendEventsWaitWithBarrier(
 
   auto zeSignalEvent =
       getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT_WITH_BARRIER);
-  auto [pWaitEvents, numWaitEvents] =
+  auto [pWaitEvents, numWaitEvents, _] =
       getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendBarrier,

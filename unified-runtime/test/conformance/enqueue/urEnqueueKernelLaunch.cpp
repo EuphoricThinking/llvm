@@ -560,7 +560,7 @@ TEST_P(urEnqueueKernelLaunchWithVirtualMemory, Success) {
                                        nullptr, &kernel_evt));
 
   std::vector<uint32_t> data(global_size);
-  printf("bef memcpy\n");
+  printf("bef memcpy2\n");
   ASSERT_SUCCESS(urEnqueueUSMMemcpy(queue, true, data.data(), virtual_ptr,
                                     alloc_size, 1, &kernel_evt, nullptr));
   printf("after memcpy\n");
