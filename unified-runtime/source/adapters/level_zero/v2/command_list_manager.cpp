@@ -56,6 +56,16 @@ ur_command_list_manager::ur_command_list_manager(
     : hContext(context), hDevice(device),
       zeCommandList(std::move(commandList)) {}
 
+v2::raii::command_list_unique_handle &&
+ur_command_list_manager::releaseCommandList() {
+  return std::move(zeCommandList);
+}
+
+void ur_command_list_manager::replaceCommandList(
+    v2::raii::command_list_unique_handle &&cmdlist) {
+  zeCommandList = std::move(cmdlist);
+}
+
 ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
     ur_mem_buffer_t *dst, size_t offset, size_t patternSize,
     const void *pPattern, size_t size, wait_list_view &waitListView, /* uint32_t
@@ -94,23 +104,13 @@ ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
   return UR_RESULT_SUCCESS;
 }
 
-v2::raii::command_list_unique_handle &&
-ur_command_list_manager::releaseCommandList() {
-  return std::move(zeCommandList);
-}
-
-void ur_command_list_manager::replaceCommandList(
-    v2::raii::command_list_unique_handle &&cmdlist) {
-  zeCommandList = std::move(cmdlist);
-}
-
 ur_result_t ur_command_list_manager::appendGenericCopyUnlocked(
     ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking, size_t srcOffset,
-    size_t dstOffset, size_t size, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
-    ur_command_t commandType) {
+    size_t dstOffset, size_t size, wait_list_view &waitListView, /*uint32_t
+    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    ur_event_handle_t phEvent, ur_command_t commandType) {
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
+  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pSrc = ur_cast<char *>(src->getDevicePtr(
       hDevice.get(), ur_mem_buffer_t::device_access_mode_t::read_only,
@@ -305,7 +305,7 @@ ur_result_t ur_command_list_manager::appendUSMMemcpy(
 
 ur_result_t ur_command_list_manager::appendMemBufferFill(
     ur_mem_handle_t hMem, const void *pPattern, size_t patternSize,
-    size_t offset, size_t size, wait_list_view& waitListView,
+    size_t offset, size_t size, wait_list_view &waitListView,
     /*uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferFill");
@@ -321,16 +321,18 @@ ur_result_t ur_command_list_manager::appendMemBufferFill(
                                    phEvent, UR_COMMAND_MEM_BUFFER_FILL);
 }
 
-ur_result_t ur_command_list_manager::appendUSMFill(
-    void *pMem, size_t patternSize, const void *pPattern, size_t size,
-    wait_list_view& waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
-    ur_event_handle_t phEvent) {
+ur_result_t
+ur_command_list_manager::appendUSMFill(void *pMem, size_t patternSize,
+                                       const void *pPattern, size_t size,
+                                       wait_list_view &waitListView,
+                                       /* uint32_t numEventsInWaitList, const
+                                          ur_event_handle_t *phEventWaitList, */
+                                       ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFill");
 
   ur_usm_handle_t dstHandle(hContext.get(), size, pMem);
   return appendGenericFillUnlocked(&dstHandle, 0, patternSize, pPattern, size,
-    waitListView,
+                                   waitListView,
                                    /* numEventsInWaitList, phEventWaitList, */
                                    phEvent, UR_COMMAND_USM_FILL);
 }
@@ -403,8 +405,9 @@ ur_result_t ur_command_list_manager::appendUSMAdvise(
 
 ur_result_t ur_command_list_manager::appendMemBufferRead(
     ur_mem_handle_t hMem, bool blockingRead, size_t offset, size_t size,
-    void *pDst, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    void *pDst, wait_list_view &waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */
+    ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferRead");
 
   auto hBuffer = hMem->getBuffer();
@@ -414,15 +417,19 @@ ur_result_t ur_command_list_manager::appendMemBufferRead(
 
   std::scoped_lock<ur_shared_mutex> lock(hBuffer->getMutex());
 
-  return appendGenericCopyUnlocked(hBuffer, &dstHandle, blockingRead, offset, 0,
-                                   size, numEventsInWaitList, phEventWaitList,
-                                   phEvent, UR_COMMAND_MEM_BUFFER_READ);
+  return appendGenericCopyUnlocked(
+      hBuffer, &dstHandle, blockingRead, offset, 0, size,
+      waitListView, /* numEventsInWaitList, phEventWaitList, */
+      phEvent, UR_COMMAND_MEM_BUFFER_READ);
 }
 
-ur_result_t ur_command_list_manager::appendMemBufferWrite(
-    ur_mem_handle_t hMem, bool blockingWrite, size_t offset, size_t size,
-    const void *pSrc, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+ur_result_t
+ur_command_list_manager::appendMemBufferWrite(ur_mem_handle_t hMem,
+                                              bool blockingWrite, size_t offset,
+                                              size_t size, const void *pSrc,
+                                              wait_list_view &waitListView,
+                                              /* uint32_t numEventsInWaitList,
+const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferWrite");
 
   auto hBuffer = hMem->getBuffer();
@@ -432,15 +439,20 @@ ur_result_t ur_command_list_manager::appendMemBufferWrite(
 
   std::scoped_lock<ur_shared_mutex> lock(hBuffer->getMutex());
 
-  return appendGenericCopyUnlocked(
-      &srcHandle, hBuffer, blockingWrite, 0, offset, size, numEventsInWaitList,
-      phEventWaitList, phEvent, UR_COMMAND_MEM_BUFFER_WRITE);
+  return appendGenericCopyUnlocked(&srcHandle, hBuffer, blockingWrite, 0,
+                                   offset, size, waitListView,
+                                   /* numEventsInWaitList,
+phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_WRITE);
 }
 
-ur_result_t ur_command_list_manager::appendMemBufferCopy(
-    ur_mem_handle_t hSrc, ur_mem_handle_t hDst, size_t srcOffset,
-    size_t dstOffset, size_t size, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+ur_result_t
+ur_command_list_manager::appendMemBufferCopy(ur_mem_handle_t hSrc,
+                                             ur_mem_handle_t hDst,
+                                             size_t srcOffset, size_t dstOffset,
+                                             size_t size,
+                                             wait_list_view &waitListView,
+                                             /* uint32_t numEventsInWaitList,
+const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferCopy");
 
   auto hBufferSrc = hSrc->getBuffer();
@@ -455,9 +467,9 @@ ur_result_t ur_command_list_manager::appendMemBufferCopy(
       hBufferSrc->getMutex(), hBufferDst->getMutex());
 
   return appendGenericCopyUnlocked(hBufferSrc, hBufferDst, false, srcOffset,
-                                   dstOffset, size, numEventsInWaitList,
-                                   phEventWaitList, phEvent,
-                                   UR_COMMAND_MEM_BUFFER_COPY);
+                                   dstOffset, size, waitListView,
+                                   /* numEventsInWaitList,
+    phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_COPY);
 }
 
 ur_result_t ur_command_list_manager::appendMemBufferReadRect(

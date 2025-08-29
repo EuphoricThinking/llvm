@@ -266,13 +266,14 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
     void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
+    wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
     // printf("I ENTER READ\n");
     TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
 
     auto lockedBatches = currentCmdLists.lock();
     UR_CALL(lockedBatches->activeBatch.appendMemBufferRead(
-        hBuffer, false, offset, size, pDst, numEventsInWaitList,
-        phEventWaitList,
+        hBuffer, false, offset, size, pDst, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequestedRegular(
             phEvent, lockedBatches->regularGenerationNumber))); // nullptr));
 
@@ -294,6 +295,8 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
 
+  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
+
   // -------------- this is not my comment --------------------
 
   // the same issue as in urCommandBufferAppendKernelLaunchExp
@@ -307,7 +310,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
   auto lockedBatches = currentCmdLists.lock();
 
   UR_CALL(lockedBatches->activeBatch.appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, numEventsInWaitList, phEventWaitList,
+      hBuffer, false, offset, size, pSrc, waitListView, /* numEventsInWaitList, phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatches->regularGenerationNumber)));
 
@@ -366,12 +369,14 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferFill(
     size_t offset, size_t size, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferFill");
-  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList);
 
   auto lockedBatch = currentCmdLists.lock();
   UR_CALL(lockedBatch->activeBatch.appendMemBufferFill(
-      hBuffer, pPattern, patternSize, offset, size, waitListView, /* numEventsInWaitList,
-      phEventWaitList, */
+      hBuffer, pPattern, patternSize, offset, size,
+      waitListView, /* numEventsInWaitList,
+phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber)));
 

@@ -377,9 +377,14 @@ ur_result_t urCommandBufferAppendMemBufferCopyExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+    wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
+
+
   UR_CALL(commandListLocked->appendMemBufferCopy(
-      hSrcMem, hDstMem, srcOffset, dstOffset, size, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      hSrcMem, hDstMem, srcOffset, dstOffset, size, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
@@ -404,9 +409,12 @@ ur_result_t urCommandBufferAppendMemBufferWriteExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+    wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      hBuffer, false, offset, size, pSrc, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
@@ -429,9 +437,12 @@ ur_result_t urCommandBufferAppendMemBufferReadExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+    wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendMemBufferRead(
-      hBuffer, false, offset, size, pDst, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      hBuffer, false, offset, size, pDst, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
@@ -541,15 +552,18 @@ ur_result_t urCommandBufferAppendUSMFillExp(
     ur_event_handle_t * /*phEvent*/,
     ur_exp_command_buffer_command_handle_t * /*phCommand*/) try {
 
-  wait_list_view waitListView = wait_list_view( nullptr /* eventsWaitList */, numSyncPointsInWaitList);
 
   auto commandListLocked = hCommandBuffer->commandListManager.lock();
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
-  UR_CALL(commandListLocked->appendUSMFill(
-      pMemory, patternSize, pPattern, size, waitListView, /* numSyncPointsInWaitList,
-      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
+    wait_list_view waitListView =
+      wait_list_view( eventsWaitList, numSyncPointsInWaitList);
+
+  UR_CALL(commandListLocked->appendUSMFill(pMemory, patternSize, pPattern, size,
+                                           waitListView,
+                                           /* numSyncPointsInWaitList,
+eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
   return UR_RESULT_SUCCESS;
 } catch (...) {
   return exceptionToResult(std::current_exception());
@@ -565,17 +579,19 @@ ur_result_t urCommandBufferAppendMemBufferFillExp(
     ur_exp_command_buffer_sync_point_t *pSyncPoint,
     ur_event_handle_t * /*phEvent*/,
     ur_exp_command_buffer_command_handle_t * /*phCommand*/) try {
-  
-      wait_list_view waitListView = wait_list_view(nullptr, /*eventsWaitList*/ numSyncPointsInWaitList);
 
   // the same issue as in urCommandBufferAppendKernelLaunchExp
   auto commandListLocked = hCommandBuffer->commandListManager.lock();
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
-  UR_CALL(commandListLocked->appendMemBufferFill(
-      hBuffer, pPattern, patternSize, offset, size, waitListView, /* numSyncPointsInWaitList,
-      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
+    wait_list_view waitListView =
+      wait_list_view(eventsWaitList,  numSyncPointsInWaitList);
+
+  UR_CALL(commandListLocked->appendMemBufferFill(hBuffer, pPattern, patternSize,
+                                                 offset, size, waitListView,
+                                                 /* numSyncPointsInWaitList,
+eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
