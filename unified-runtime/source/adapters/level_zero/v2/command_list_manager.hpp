@@ -14,6 +14,7 @@
 #include "context.hpp"
 #include "event_pool_cache.hpp"
 #include "queue_api.hpp"
+#include "ur_api.h"
 #include <cstddef>
 #include <ze_api.h>
 
@@ -28,6 +29,8 @@ struct wait_list_view {
   //      : handles(num > 0 ? handles : nullptr), num(num) {}
 
   wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents);
+  wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents,
+                 ur_queue_t_ *currentBatchedQueue);
   // : handles(num > 0 ? handles : nullptr), num(num) {}
 
   void addAdditionalEvent(ur_event_handle_t additionalEvent);

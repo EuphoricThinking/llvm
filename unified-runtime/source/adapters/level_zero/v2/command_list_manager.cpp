@@ -28,7 +28,7 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
     num = 0;
     max_size = 0;
   } else {
-    num = static_cast<uint32_t>(numWaitEvents);
+    num = numWaitEvents;
     max_size = num + 1;
 
     waitList.resize(max_size);
@@ -39,6 +39,24 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
 
     handles = waitList.data();
   }
+}
+
+wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
+                               uint32_t numWaitEvents,
+                               ur_queue_t_ *currentBatchedQueue) {
+  num = numWaitEvents;
+  max_size = num + 1;
+
+  waitList.resize(max_size);
+  for (uint32_t i = 0; i < numWaitEvents; i++) {
+    if (currentBatchedQueue != phWaitEvents[i]->getQueue()) {
+      phWaitEvents[i]->runBatch();
+    }
+
+    waitList[i] = phWaitEvents[i]->getZeEvent();
+  }
+
+  handles = waitList.data();
 }
 
 void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {

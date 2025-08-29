@@ -266,14 +266,16 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
     void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
-    wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList, this);
     // printf("I ENTER READ\n");
     TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
 
     auto lockedBatches = currentCmdLists.lock();
     UR_CALL(lockedBatches->activeBatch.appendMemBufferRead(
-        hBuffer, false, offset, size, pDst, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hBuffer, false, offset, size, pDst,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequestedRegular(
             phEvent, lockedBatches->regularGenerationNumber))); // nullptr));
 
@@ -295,7 +297,8 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
 
-  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   // -------------- this is not my comment --------------------
 
@@ -310,7 +313,8 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
   auto lockedBatches = currentCmdLists.lock();
 
   UR_CALL(lockedBatches->activeBatch.appendMemBufferWrite(
-      hBuffer, false, offset, size, pSrc, waitListView, /* numEventsInWaitList, phEventWaitList, */
+      hBuffer, false, offset, size, pSrc,
+      waitListView, /* numEventsInWaitList, phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatches->regularGenerationNumber)));
 
@@ -370,7 +374,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferFill(
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferFill");
   wait_list_view waitListView =
-      wait_list_view(phEventWaitList, numEventsInWaitList);
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatch = currentCmdLists.lock();
   UR_CALL(lockedBatch->activeBatch.appendMemBufferFill(
