@@ -21,9 +21,15 @@ struct ur_mem_buffer_t;
 struct wait_list_view {
   ze_event_handle_t *handles;
   uint32_t num;
+  uint32_t max_size;
 
-  wait_list_view(ze_event_handle_t *handles, uint32_t num)
-      : handles(num > 0 ? handles : nullptr), num(num) {}
+//   wait_list_view(ze_event_handle_t *handles, uint32_t num)
+//      : handles(num > 0 ? handles : nullptr), num(num) {}
+
+    wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents);
+     // : handles(num > 0 ? handles : nullptr), num(num) {}
+
+    void addAdditionalEvent(ur_event_handle_t additionalEvent);
 
   operator bool() const {
     assert((handles != nullptr) == (num > 0));

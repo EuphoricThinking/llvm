@@ -215,6 +215,7 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
+                                    // printf("memcpy batched\n");
     auto lockedBatch = currentCmdLists.lock();
     return lockedBatch->activeBatch.appendMemBufferCopy(
         hBufferSrc, hBufferDst, srcOffset, dstOffset, size, numEventsInWaitList,
