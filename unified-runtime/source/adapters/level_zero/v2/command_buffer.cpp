@@ -325,9 +325,12 @@ ur_result_t urCommandBufferAppendKernelLaunchExp(
   auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
       syncPointWaitList, numSyncPointsInWaitList);
 
+    wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendKernelLaunch(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize, 0,
-      nullptr, numSyncPointsInWaitList, eventsWaitList,
+      nullptr, waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
       commandBuffer->createEventIfRequested(retSyncPoint)));
 
   return UR_RESULT_SUCCESS;

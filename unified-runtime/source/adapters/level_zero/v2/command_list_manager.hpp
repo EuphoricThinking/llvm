@@ -226,8 +226,8 @@ struct ur_command_list_manager {
       ur_kernel_handle_t hKernel, uint32_t workDim,
       const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
       const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
-      const ur_kernel_launch_property_t *launchPropList,
-      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+      const ur_kernel_launch_property_t *launchPropList, wait_list_view& waitListView,
+      /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
       ur_event_handle_t phEvent);
   ur_result_t
   appendNativeCommandExp(ur_exp_enqueue_native_command_function_t, void *,
@@ -269,8 +269,8 @@ private:
   ur_result_t appendKernelLaunchUnlocked(
       ur_kernel_handle_t hKernel, uint32_t workDim,
       const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
-      const size_t *pLocalWorkSize, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
+      const size_t *pLocalWorkSize, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
       bool cooperative);
 
   ur_result_t appendGenericFillUnlocked(ur_mem_buffer_t *hBuffer, size_t offset,
