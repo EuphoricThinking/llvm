@@ -23,11 +23,11 @@ thread_local std::vector<ze_event_handle_t> waitList;
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
                                uint32_t numWaitEvents) {
 
-  if (phWaitEvents == nullptr) {
-    handles = nullptr;
-    num = 0;
-    max_size = 0;
-  } else {
+  // if (phWaitEvents == nullptr) {
+  //   handles = nullptr;
+  //   num = 0;
+  //   max_size = 0;
+  // } else {
     num = numWaitEvents;
     max_size = num + 1;
 
@@ -38,7 +38,7 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
     }
 
     handles = waitList.data();
-  }
+  // }
 }
 
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
@@ -198,6 +198,7 @@ wait_list_view ur_command_list_manager::getWaitListView(
   }
 
   wait_list_view waitlist = wait_list_view(phWaitEvents, numWaitEvents);
+  // printf("num %d max size %d\n", waitlist.num, waitlist.max_size);
   waitlist.addAdditionalEvent(additionalWaitEvent);
 
   return waitlist;
