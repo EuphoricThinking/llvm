@@ -87,14 +87,15 @@ struct ur_command_list_manager {
       ur_mem_handle_t hBuffer, bool blockingRead, ur_rect_offset_t bufferOrigin,
       ur_rect_offset_t hostOrigin, ur_rect_region_t region,
       size_t bufferRowPitch, size_t bufferSlicePitch, size_t hostRowPitch,
-      size_t hostSlicePitch, void *pDst, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      size_t hostSlicePitch, void *pDst, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t appendMemBufferWriteRect(
       ur_mem_handle_t hBuffer, bool blockingWrite,
       ur_rect_offset_t bufferOrigin, ur_rect_offset_t hostOrigin,
       ur_rect_region_t region, size_t bufferRowPitch, size_t bufferSlicePitch,
       size_t hostRowPitch, size_t hostSlicePitch, void *pSrc,
-      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+      wait_list_view& waitListView,
+      /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
       ur_event_handle_t phEvent);
   ur_result_t appendMemBufferCopy(ur_mem_handle_t hBufferSrc,
                                   ur_mem_handle_t hBufferDst, size_t srcOffset,
@@ -107,8 +108,8 @@ struct ur_command_list_manager {
       ur_mem_handle_t hBufferSrc, ur_mem_handle_t hBufferDst,
       ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
       ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
-      size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      size_t dstRowPitch, size_t dstSlicePitch, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t
   appendMemBufferFill(ur_mem_handle_t hBuffer, const void *pPattern,
                       size_t patternSize, size_t offset, size_t size,
@@ -158,8 +159,8 @@ struct ur_command_list_manager {
                               size_t, uint32_t, const ur_event_handle_t *,
                               ur_event_handle_t);
   ur_result_t appendUSMMemcpy2D(bool, void *, size_t, const void *, size_t,
-                                size_t, size_t, uint32_t,
-                                const ur_event_handle_t *, ur_event_handle_t);
+                                size_t, size_t, wait_list_view&, /* uint32_t,
+                                const ur_event_handle_t *, */ ur_event_handle_t);
   ur_result_t appendUSMPrefetch(const void *pMem, size_t size,
                                 ur_usm_migration_flags_t flags,
                                 uint32_t numEventsInWaitList,
@@ -291,8 +292,8 @@ private:
       ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking,
       ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
       ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
-      size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
+      size_t dstRowPitch, size_t dstSlicePitch, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ur_event_handle_t phEvent,
       ur_command_t commandType);
 
   // Context needs to be a first member - it needs to be alive

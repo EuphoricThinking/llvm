@@ -153,14 +153,14 @@ ur_result_t ur_command_list_manager::appendRegionCopyUnlocked(
     ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking,
     ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
     ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
-    size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
+    size_t dstRowPitch, size_t dstSlicePitch, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
     ur_command_t commandType) {
   auto zeParams = ur2zeRegionParams(srcOrigin, dstOrigin, region, srcRowPitch,
                                     dstRowPitch, srcSlicePitch, dstSlicePitch);
 
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
+  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pSrc = ur_cast<char *>(src->getDevicePtr(
       hDevice.get(), ur_mem_buffer_t::device_access_mode_t::read_only, 0,
@@ -494,8 +494,8 @@ ur_result_t ur_command_list_manager::appendMemBufferReadRect(
     ur_mem_handle_t hMem, bool blockingRead, ur_rect_offset_t bufferOrigin,
     ur_rect_offset_t hostOrigin, ur_rect_region_t region, size_t bufferRowPitch,
     size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-    void *pDst, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    void *pDst, wait_list_view& waitListView, /*uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferReadRect");
 
   auto hBuffer = hMem->getBuffer();
@@ -505,8 +505,8 @@ ur_result_t ur_command_list_manager::appendMemBufferReadRect(
 
   return appendRegionCopyUnlocked(
       hBuffer, &dstHandle, blockingRead, bufferOrigin, hostOrigin, region,
-      bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch,
-      numEventsInWaitList, phEventWaitList, phEvent,
+      bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, waitListView,
+      /* numEventsInWaitList, phEventWaitList, */ phEvent,
       UR_COMMAND_MEM_BUFFER_READ_RECT);
 }
 
@@ -514,8 +514,8 @@ ur_result_t ur_command_list_manager::appendMemBufferWriteRect(
     ur_mem_handle_t hMem, bool blockingWrite, ur_rect_offset_t bufferOrigin,
     ur_rect_offset_t hostOrigin, ur_rect_region_t region, size_t bufferRowPitch,
     size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-    void *pSrc, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    void *pSrc, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferWriteRect");
 
   auto hBuffer = hMem->getBuffer();
@@ -526,15 +526,16 @@ ur_result_t ur_command_list_manager::appendMemBufferWriteRect(
   return appendRegionCopyUnlocked(
       &srcHandle, hBuffer, blockingWrite, hostOrigin, bufferOrigin, region,
       hostRowPitch, hostSlicePitch, bufferRowPitch, bufferSlicePitch,
-      numEventsInWaitList, phEventWaitList, phEvent,
+      waitListView,
+      /* numEventsInWaitList, phEventWaitList, */ phEvent,
       UR_COMMAND_MEM_BUFFER_WRITE_RECT);
 }
 
 ur_result_t ur_command_list_manager::appendMemBufferCopyRect(
     ur_mem_handle_t hSrc, ur_mem_handle_t hDst, ur_rect_offset_t srcOrigin,
     ur_rect_offset_t dstOrigin, ur_rect_region_t region, size_t srcRowPitch,
-    size_t srcSlicePitch, size_t dstRowPitch, size_t dstSlicePitch,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    size_t srcSlicePitch, size_t dstRowPitch, size_t dstSlicePitch, wait_list_view& waitListView, 
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferCopyRect");
 
@@ -546,14 +547,14 @@ ur_result_t ur_command_list_manager::appendMemBufferCopyRect(
 
   return appendRegionCopyUnlocked(
       hBufferSrc, hBufferDst, false, srcOrigin, dstOrigin, region, srcRowPitch,
-      srcSlicePitch, dstRowPitch, dstSlicePitch, numEventsInWaitList,
-      phEventWaitList, phEvent, UR_COMMAND_MEM_BUFFER_COPY_RECT);
+      srcSlicePitch, dstRowPitch, dstSlicePitch, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_COPY_RECT);
 }
 
 ur_result_t ur_command_list_manager::appendUSMMemcpy2D(
     bool blocking, void *pDst, size_t dstPitch, const void *pSrc,
-    size_t srcPitch, size_t width, size_t height, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    size_t srcPitch, size_t width, size_t height, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMMemcpy2D");
 
   ur_rect_offset_t zeroOffset{0, 0, 0};
@@ -564,7 +565,8 @@ ur_result_t ur_command_list_manager::appendUSMMemcpy2D(
 
   return appendRegionCopyUnlocked(&srcHandle, &dstHandle, blocking, zeroOffset,
                                   zeroOffset, region, srcPitch, 0, dstPitch, 0,
-                                  numEventsInWaitList, phEventWaitList, phEvent,
+                                  waitListView, 
+                                  /* numEventsInWaitList, phEventWaitList, */phEvent,
                                   UR_COMMAND_USM_MEMCPY_2D);
 }
 
