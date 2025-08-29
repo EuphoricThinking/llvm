@@ -470,10 +470,13 @@ ur_result_t urCommandBufferAppendMemBufferCopyRectExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+  wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendMemBufferCopyRect(
       hSrcMem, hDstMem, srcOrigin, dstOrigin, region, srcRowPitch,
-      srcSlicePitch, dstRowPitch, dstSlicePitch, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      srcSlicePitch, dstRowPitch, dstSlicePitch, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
@@ -500,10 +503,13 @@ ur_result_t urCommandBufferAppendMemBufferWriteRectExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+  wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendMemBufferWriteRect(
       hBuffer, false, bufferOffset, hostOffset, region, bufferRowPitch,
-      bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
-      numSyncPointsInWaitList, eventsWaitList,
+      bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc, waitListView,
+      /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
@@ -531,10 +537,13 @@ ur_result_t urCommandBufferAppendMemBufferReadRectExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+  wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendMemBufferReadRect(
       hBuffer, false, bufferOffset, hostOffset, region, bufferRowPitch,
-      bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst,
-      numSyncPointsInWaitList, eventsWaitList,
+      bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst, waitListView,
+      /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
