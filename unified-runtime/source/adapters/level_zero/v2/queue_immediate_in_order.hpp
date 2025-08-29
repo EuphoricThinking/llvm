@@ -60,10 +60,13 @@ public:
       const ur_kernel_launch_property_t *launchPropList,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
+        wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     return commandListManager.lock()->appendKernelLaunch(
         hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-        numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-        phEventWaitList,
+        numPropsInLaunchPropList, launchPropList, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
   ur_result_t

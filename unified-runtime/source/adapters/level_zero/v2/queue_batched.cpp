@@ -157,12 +157,15 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
 
+  wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueKernelLaunch");
   auto currentRegular = currentCmdLists.lock();
   UR_CALL(currentRegular->activeBatch.appendKernelLaunch(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      numPropsInLaunchPropList, launchPropList, numEventsInWaitList,
-      phEventWaitList,
+      numPropsInLaunchPropList, launchPropList, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */
       createEventIfRequestedRegular(
           phEvent,
           currentRegular->regularGenerationNumber))); // nullptr));

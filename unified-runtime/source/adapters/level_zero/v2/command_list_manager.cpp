@@ -218,8 +218,8 @@ ur_command_list_manager::getSignalEvent(ur_event_handle_t hUserEvent,
 ur_result_t ur_command_list_manager::appendKernelLaunchUnlocked(
     ur_kernel_handle_t hKernel, uint32_t workDim,
     const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
-    const size_t *pLocalWorkSize, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent,
+    const size_t *pLocalWorkSize, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
     bool cooperative) {
   UR_ASSERT(hKernel, UR_RESULT_ERROR_INVALID_NULL_HANDLE);
   UR_ASSERT(hKernel->getProgramHandle(), UR_RESULT_ERROR_INVALID_NULL_POINTER);
@@ -238,7 +238,7 @@ ur_result_t ur_command_list_manager::appendKernelLaunchUnlocked(
                                         pGlobalWorkSize, pLocalWorkSize));
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_KERNEL_LAUNCH);
-  auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
+  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   UR_CALL(hKernel->prepareForSubmission(
       hContext.get(), hDevice.get(), pGlobalWorkOffset, workDim, WG[0], WG[1],
@@ -269,8 +269,8 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
     ur_kernel_handle_t hKernel, uint32_t workDim,
     const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
     const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
-    const ur_kernel_launch_property_t *launchPropList,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    const ur_kernel_launch_property_t *launchPropList, wait_list_view& waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendKernelLaunch");
 
@@ -281,7 +281,7 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
         launchPropList[propIndex].value.cooperative) {
       UR_CALL(appendKernelLaunchUnlocked(hKernel, workDim, pGlobalWorkOffset,
                                          pGlobalWorkSize, pLocalWorkSize,
-                                         numEventsInWaitList, phEventWaitList,
+                                         waitListView,                                         /* numEventsInWaitList, phEventWaitList, */
                                          phEvent, true /* cooperative */));
       return UR_RESULT_SUCCESS;
     }
@@ -295,7 +295,8 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
 
   UR_CALL(appendKernelLaunchUnlocked(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      numEventsInWaitList, phEventWaitList, phEvent, false /* cooperative */));
+      waitListView,
+      /* numEventsInWaitList, phEventWaitList, */ phEvent, false /* cooperative */));
 
   return UR_RESULT_SUCCESS;
 }
