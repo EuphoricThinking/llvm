@@ -58,7 +58,7 @@ ur_command_list_manager::ur_command_list_manager(
 
 ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
     ur_mem_buffer_t *dst, size_t offset, size_t patternSize,
-    const void *pPattern, size_t size, wait_list_view waitListView, /* uint32_t
+    const void *pPattern, size_t size, wait_list_view &waitListView, /* uint32_t
     numEventsInWaitList, const ur_event_handle_t *phEventWaitList */
     ur_event_handle_t phEvent, ur_command_t commandType) {
 
@@ -305,7 +305,7 @@ ur_result_t ur_command_list_manager::appendUSMMemcpy(
 
 ur_result_t ur_command_list_manager::appendMemBufferFill(
     ur_mem_handle_t hMem, const void *pPattern, size_t patternSize,
-    size_t offset, size_t size, wait_list_view waitListView,
+    size_t offset, size_t size, wait_list_view& waitListView,
     /*uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferFill");
@@ -323,7 +323,7 @@ ur_result_t ur_command_list_manager::appendMemBufferFill(
 
 ur_result_t ur_command_list_manager::appendUSMFill(
     void *pMem, size_t patternSize, const void *pPattern, size_t size,
-    wait_list_view waitListView,
+    wait_list_view& waitListView,
     /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFill");
