@@ -191,10 +191,12 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList); 
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemBufferFill(
-        hBuffer, pPattern, patternSize, offset, size, numEventsInWaitList,
-        phEventWaitList,
+        hBuffer, pPattern, patternSize, offset, size, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -267,9 +269,11 @@ public:
                              uint32_t numEventsInWaitList,
                              const ur_event_handle_t *phEventWaitList,
                              ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList);
+    
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendUSMFill(
-        pMem, patternSize, pPattern, size, numEventsInWaitList, phEventWaitList,
+        pMem, patternSize, pPattern, size, waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 

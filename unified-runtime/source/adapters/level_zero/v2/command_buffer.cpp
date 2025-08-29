@@ -12,8 +12,10 @@
 #include "../command_buffer_command.hpp"
 #include "../helpers/kernel_helpers.hpp"
 #include "../ur_interface_loader.hpp"
+#include "adapters/level_zero/v2/command_list_manager.hpp"
 #include "logger/ur_logger.hpp"
 #include "queue_handle.hpp"
+#include <cstddef>
 
 namespace {
 
@@ -539,13 +541,15 @@ ur_result_t urCommandBufferAppendUSMFillExp(
     ur_event_handle_t * /*phEvent*/,
     ur_exp_command_buffer_command_handle_t * /*phCommand*/) try {
 
+  wait_list_view waitListView = wait_list_view( nullptr /* eventsWaitList */, numSyncPointsInWaitList);
+
   auto commandListLocked = hCommandBuffer->commandListManager.lock();
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendUSMFill(
-      pMemory, patternSize, pPattern, size, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      pMemory, patternSize, pPattern, size, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
   return UR_RESULT_SUCCESS;
 } catch (...) {
   return exceptionToResult(std::current_exception());
@@ -561,6 +565,8 @@ ur_result_t urCommandBufferAppendMemBufferFillExp(
     ur_exp_command_buffer_sync_point_t *pSyncPoint,
     ur_event_handle_t * /*phEvent*/,
     ur_exp_command_buffer_command_handle_t * /*phCommand*/) try {
+  
+      wait_list_view waitListView = wait_list_view(nullptr, /*eventsWaitList*/ numSyncPointsInWaitList);
 
   // the same issue as in urCommandBufferAppendKernelLaunchExp
   auto commandListLocked = hCommandBuffer->commandListManager.lock();
@@ -568,8 +574,8 @@ ur_result_t urCommandBufferAppendMemBufferFillExp(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendMemBufferFill(
-      hBuffer, pPattern, patternSize, offset, size, numSyncPointsInWaitList,
-      eventsWaitList, hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      hBuffer, pPattern, patternSize, offset, size, waitListView, /* numSyncPointsInWaitList,
+      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
