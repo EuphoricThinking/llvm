@@ -282,8 +282,11 @@ phEventWaitList,*/
                                size_t size, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     return commandListManager.lock()->appendUSMMemcpy(
-        blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
+        blocking, pDst, pSrc, size, waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -337,9 +340,12 @@ phEventWaitList,*/
       size_t count, size_t offset, const void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     return commandListManager.lock()->appendDeviceGlobalVariableWrite(
-        hProgram, name, blockingWrite, count, offset, pSrc, numEventsInWaitList,
-        phEventWaitList,
+        hProgram, name, blockingWrite, count, offset, pSrc, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -348,9 +354,12 @@ phEventWaitList,*/
       size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override {
+        wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     return commandListManager.lock()->appendDeviceGlobalVariableRead(
-        hProgram, name, blockingRead, count, offset, pDst, numEventsInWaitList,
-        phEventWaitList,
+        hProgram, name, blockingRead, count, offset, pDst, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 

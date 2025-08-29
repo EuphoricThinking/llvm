@@ -152,8 +152,9 @@ struct ur_command_list_manager {
                             const ur_event_handle_t *phEventWaitList, */
                             ur_event_handle_t phEvent);
   ur_result_t appendUSMMemcpy(bool blocking, void *pDst, const void *pSrc,
-                              size_t size, uint32_t numEventsInWaitList,
-                              const ur_event_handle_t *phEventWaitList,
+                              size_t size, wait_list_view& waitListView, 
+                              /* uint32_t numEventsInWaitList,
+                              const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
   ur_result_t appendUSMFill2D(void *, size_t, size_t, const void *, size_t,
                               size_t, uint32_t, const ur_event_handle_t *,
@@ -174,12 +175,13 @@ struct ur_command_list_manager {
   ur_result_t appendDeviceGlobalVariableWrite(
       ur_program_handle_t hProgram, const char *name, bool blockingWrite,
       size_t count, size_t offset, const void *pSrc,
-      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+      wait_list_view& waitListView,
+      /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
       ur_event_handle_t phEvent);
   ur_result_t appendDeviceGlobalVariableRead(
       ur_program_handle_t hProgram, const char *name, bool blockingRead,
-      size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      size_t count, size_t offset, void *pDst, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t appendReadHostPipe(ur_program_handle_t hProgram,
                                  const char *pipe_symbol, bool blocking,
                                  void *pDst, size_t size,

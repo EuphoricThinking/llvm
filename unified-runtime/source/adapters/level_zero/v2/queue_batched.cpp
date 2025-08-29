@@ -336,11 +336,14 @@ ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableWrite(
     ur_program_handle_t hProgram, const char *name, bool blockingWrite,
     size_t count, size_t offset, const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+      wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
   auto lockedBatch = currentCmdLists.lock();
 
   UR_CALL(lockedBatch->activeBatch.appendDeviceGlobalVariableWrite(
-      hProgram, name, false, count, offset, pSrc, numEventsInWaitList,
-      phEventWaitList,
+      hProgram, name, false, count, offset, pSrc, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber)));
 
@@ -355,11 +358,14 @@ ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableRead(
     ur_program_handle_t hProgram, const char *name, bool blockingRead,
     size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+    wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
   auto lockedBatch = currentCmdLists.lock();
 
   lockedBatch->activeBatch.appendDeviceGlobalVariableRead(
-      hProgram, name, blockingRead, count, offset, pDst, numEventsInWaitList,
-      phEventWaitList,
+      hProgram, name, blockingRead, count, offset, pDst, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
   // return UR_RESULT_ERROR_INVALID_VALUE;
@@ -397,9 +403,12 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
   printf("memcpy batched\n");
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
-      blocking, pDst, pSrc, size, numEventsInWaitList, phEventWaitList,
+      blocking, pDst, pSrc, size, waitListView, /* numEventsInWaitList, phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
 
