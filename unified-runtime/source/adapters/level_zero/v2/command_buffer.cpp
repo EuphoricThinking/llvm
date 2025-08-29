@@ -353,8 +353,11 @@ ur_result_t urCommandBufferAppendUSMMemcpyExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
+      wait_list_view waitListView =
+      wait_list_view(eventsWaitList, numSyncPointsInWaitList);
+
   UR_CALL(commandListLocked->appendUSMMemcpy(
-      false, pDst, pSrc, size, numSyncPointsInWaitList, eventsWaitList,
+      false, pDst, pSrc, size, waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;

@@ -303,13 +303,15 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
 
 ur_result_t ur_command_list_manager::appendUSMMemcpy(
     bool blocking, void *pDst, const void *pSrc, size_t size,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    wait_list_view& waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMMemcpy");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_MEMCPY);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
+  // auto [pWaitEvents, numWaitEvents, _] =
+  //     getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendMemoryCopy,
              (zeCommandList.get(), pDst, pSrc, size, zeSignalEvent,
@@ -797,8 +799,8 @@ static void *getGlobalPointerFromModule(ze_module_handle_t hModule,
 
 ur_result_t ur_command_list_manager::appendDeviceGlobalVariableWrite(
     ur_program_handle_t hProgram, const char *name, bool blockingWrite,
-    size_t count, size_t offset, const void *pSrc, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    size_t count, size_t offset, const void *pSrc, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY(
       "ur_command_list_manager::appendDeviceGlobalVariableWrite");
 
@@ -811,14 +813,14 @@ ur_result_t ur_command_list_manager::appendDeviceGlobalVariableWrite(
 
   // Locking is done inside appendUSMMemcpy
   return appendUSMMemcpy(blockingWrite, ur_cast<char *>(globalVarPtr) + offset,
-                         pSrc, count, numEventsInWaitList, phEventWaitList,
+                         pSrc, count, waitListView, /* numEventsInWaitList, phEventWaitList, */
                          phEvent);
 }
 
 ur_result_t ur_command_list_manager::appendDeviceGlobalVariableRead(
     ur_program_handle_t hProgram, const char *name, bool blockingRead,
-    size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    size_t count, size_t offset, void *pDst, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY(
       "ur_command_list_manager::appendDeviceGlobalVariableRead");
 
@@ -831,8 +833,8 @@ ur_result_t ur_command_list_manager::appendDeviceGlobalVariableRead(
 
   // Locking is done inside appendUSMMemcpy
   return appendUSMMemcpy(blockingRead, pDst,
-                         ur_cast<char *>(globalVarPtr) + offset, count,
-                         numEventsInWaitList, phEventWaitList, phEvent);
+                         ur_cast<char *>(globalVarPtr) + offset, count, waitListView, 
+                         /* numEventsInWaitList, phEventWaitList, */ phEvent);
 }
 
 ur_result_t ur_command_list_manager::appendReadHostPipe(
