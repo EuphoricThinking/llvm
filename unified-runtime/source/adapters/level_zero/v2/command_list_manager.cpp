@@ -18,12 +18,27 @@
 #include "memory.hpp"
 #include <cassert>
 
+thread_local std::vector<ze_event_handle_t> waitList;
 
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents) {
-  num = numWaitEvents;
-  max_size = num + 1;
 
+  if (phWaitEvents == nullptr) {
+    handles = nullptr;
+    num = 0;
+    max_size = 0;
+  }
+  else {
+    num = static_cast<uint32_t>(numWaitEvents);
+    max_size = num + 1;
 
+    waitList.resize(max_size);
+    for (uint32_t i = 0; i < numWaitEvents; i++) {
+      phWaitEvents[i]->runBatch();
+      waitList[i] = phWaitEvents[i]->getZeEvent();
+    }
+
+    handles = waitList.data();
+  }
 }
 
 void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
