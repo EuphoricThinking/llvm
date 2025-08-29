@@ -14,6 +14,7 @@
 #include "context.hpp"
 #include "event_pool_cache.hpp"
 #include "queue_api.hpp"
+#include <cstddef>
 #include <ze_api.h>
 
 struct ur_mem_buffer_t;
