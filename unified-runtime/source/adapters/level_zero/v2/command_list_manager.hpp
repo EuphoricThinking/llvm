@@ -36,6 +36,7 @@ struct wait_list_view {
   void addAdditionalEvent(ur_event_handle_t additionalEvent);
 
   operator bool() const {
+    // printf("hanf=dles is null %d num%d\n", handles == nullptr, num);
     assert((handles != nullptr) == (num > 0));
     return num > 0;
   }
