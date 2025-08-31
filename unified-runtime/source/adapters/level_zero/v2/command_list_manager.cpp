@@ -26,8 +26,8 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
   if (phWaitEvents == nullptr) {
     handles = nullptr;
     num = 0;
-    max_size = 0;
-    waitList.resize(max_size);
+    max_size = 1;
+    waitList.resize(num);
   } else {
     num = numWaitEvents;
     max_size = num + 1;
@@ -65,14 +65,25 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
 void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
   if (additionalEvent) {
     // assert(num != max_size);
-    printf("empalcing size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
     // handles[num] = additionalEvent->getZeEvent();
-    waitList.emplace_back(additionalEvent->getZeEvent());
-    handles = waitList.data();
+    if (handles) {
+      assert(num != max_size);
+      handles[num] = additionalEvent->getZeEvent();
+      num++;
+    }
+    else {
+      waitList.emplace_back(additionalEvent->getZeEvent());
+      num++;
+      handles = waitList.data();
+    }
 
-     printf("empalcing2 size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
+    // printf("empalcing size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
+    // waitList.emplace_back(additionalEvent->getZeEvent());
+    // handles = waitList.data();
 
-    num++;
+    //  printf("empalcing2 size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
+
+    // num++;
   }
 }
 
