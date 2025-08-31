@@ -22,12 +22,13 @@ thread_local std::vector<ze_event_handle_t> waitList;
 
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
                                uint32_t numWaitEvents) {
-
-  // if (phWaitEvents == nullptr) {
-  //   handles = nullptr;
-  //   num = 0;
-  //   max_size = 0;
-  // } else {
+                                printf("OUTER ptr cnstr %p capac %ld size %ld\n", (void*)waitList.data(), waitList.capacity(), waitList.capacity());
+  if (phWaitEvents == nullptr) {
+    handles = nullptr;
+    num = 0;
+    max_size = 0;
+    waitList.resize(max_size);
+  } else {
     num = numWaitEvents;
     max_size = num + 1;
 
@@ -37,8 +38,10 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
       waitList[i] = phWaitEvents[i]->getZeEvent();
     }
 
+    printf("\tptr cnstr %p\n", (void*)waitList.data());
+
     handles = waitList.data();
-  // }
+  }
 }
 
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
@@ -61,9 +64,14 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
 
 void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
   if (additionalEvent) {
-    assert(num != max_size);
+    // assert(num != max_size);
+    printf("empalcing size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
+    // handles[num] = additionalEvent->getZeEvent();
+    waitList.emplace_back(additionalEvent->getZeEvent());
+    handles = waitList.data();
 
-    handles[num] = additionalEvent->getZeEvent();
+     printf("empalcing2 size %ld ptr %p capac %ld\n", waitList.size(), (void*)waitList.data(), waitList.capacity());
+
     num++;
   }
 }
@@ -186,20 +194,22 @@ wait_list_view ur_command_list_manager::getWaitListView(
     const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents,
     ur_event_handle_t additionalWaitEvent) {
 
-  uint32_t totalNumWaitEvents =
-      numWaitEvents + (additionalWaitEvent != nullptr ? 1 : 0);
-  waitList.resize(totalNumWaitEvents);
-  for (uint32_t i = 0; i < numWaitEvents; i++) {
-    phWaitEvents[i]->runBatch();
-    waitList[i] = phWaitEvents[i]->getZeEvent();
-  }
-  if (additionalWaitEvent != nullptr) {
-    waitList[totalNumWaitEvents - 1] = additionalWaitEvent->getZeEvent();
-  }
+  // uint32_t totalNumWaitEvents =
+  //     numWaitEvents + (additionalWaitEvent != nullptr ? 1 : 0);
+  // waitList.resize(totalNumWaitEvents);
+  // for (uint32_t i = 0; i < numWaitEvents; i++) {
+  //   phWaitEvents[i]->runBatch();
+  //   waitList[i] = phWaitEvents[i]->getZeEvent();
+  // }
+  // if (additionalWaitEvent != nullptr) {
+  //   waitList[totalNumWaitEvents - 1] = additionalWaitEvent->getZeEvent();
+  // }
 
   wait_list_view waitlist = wait_list_view(phWaitEvents, numWaitEvents);
   // printf("num %d max size %d\n", waitlist.num, waitlist.max_size);
+  printf("event %p num events %d capac %ld ptr %p handle %p\n", (void*) additionalWaitEvent, numWaitEvents, waitList.capacity(), (void*)waitList.data(), (void*)waitlist.handles);
   waitlist.addAdditionalEvent(additionalWaitEvent);
+  printf("ptr2 %p handle %p capac %ld size %ld\n", (void*)waitList.data(), (void*)waitlist.handles, waitList.capacity(), waitList.size());
 
   return waitlist;
   // return {waitList.data(), static_cast<uint32_t>(totalNumWaitEvents)};
