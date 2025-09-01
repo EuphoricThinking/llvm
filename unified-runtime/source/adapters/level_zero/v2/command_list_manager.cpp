@@ -1137,13 +1137,13 @@ ze_command_list_handle_t ur_command_list_manager::getZeCommandList() {
 }
 
 ur_result_t ur_command_list_manager::appendEventsWait(
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */ wait_list_view& waitListView, 
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendEventsWait");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
+      // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (numWaitEvents > 0) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -1159,14 +1159,15 @@ ur_result_t ur_command_list_manager::appendEventsWait(
 }
 
 ur_result_t ur_command_list_manager::appendEventsWaitWithBarrier(
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+  wait_list_view& waitList,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendEventsWaitWithBarrier");
 
   auto zeSignalEvent =
       getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT_WITH_BARRIER);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitList;
+      // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendBarrier,
              (zeCommandList.get(), zeSignalEvent, numWaitEvents, pWaitEvents));

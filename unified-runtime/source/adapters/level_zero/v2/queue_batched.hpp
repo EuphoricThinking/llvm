@@ -132,9 +132,13 @@ public:
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
     auto lockedBatch = currentCmdLists.lock();
     return lockedBatch->activeBatch.appendEventsWait(
-        numEventsInWaitList, phEventWaitList,
+      waitListView, 
+        /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
                                       lockedBatch->regularGenerationNumber));
     // return UR_RESULT_ERROR_INVALID_VALUE;

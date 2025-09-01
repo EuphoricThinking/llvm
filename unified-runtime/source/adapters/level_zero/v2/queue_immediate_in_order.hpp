@@ -78,8 +78,12 @@ phEventWaitList, */
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     return commandListManager.lock()->appendEventsWait(
-        numEventsInWaitList, phEventWaitList,
+        waitListView,
+        /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
   ur_result_t
