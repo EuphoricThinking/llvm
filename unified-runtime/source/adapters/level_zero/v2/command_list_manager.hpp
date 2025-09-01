@@ -65,12 +65,15 @@ struct ur_command_list_manager {
   ur_result_t releaseSubmittedKernels();
 
   /************ Generic queue methods *************/
-  ur_result_t appendEventsWait(uint32_t numEventsInWaitList,
-                               const ur_event_handle_t *phEventWaitList,
-                               ur_event_handle_t phEvent);
+  ur_result_t appendEventsWait(/*uint32_t numEventsInWaitList,
+                               const ur_event_handle_t *phEventWaitList, */
+                               wait_list_view& waitListView,
+                               ur_event_handle_t phEvent
+                              );
   ur_result_t
-  appendEventsWaitWithBarrier(uint32_t numEventsInWaitList,
-                              const ur_event_handle_t *phEventWaitList,
+  appendEventsWaitWithBarrier(wait_list_view& waitList,
+                              /* uint32_t numEventsInWaitList,
+                              const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
   ur_result_t appendMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
                                   size_t offset, size_t size, void *pDst,
