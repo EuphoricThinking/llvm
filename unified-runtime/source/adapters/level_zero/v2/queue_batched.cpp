@@ -405,10 +405,10 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
     bool blocking, void *pDst, const void *pSrc, size_t size,
     uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
     ur_event_handle_t *phEvent) {
-  printf("memcpy batched\n");
+  // printf("memcpy batched\n");
   wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
-printf("after waitlist\n");
+// printf("after waitlist\n");
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
       false, pDst, pSrc, size,
