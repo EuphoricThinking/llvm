@@ -158,14 +158,15 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
     ur_event_handle_t *phEvent) {
 
   wait_list_view waitListView =
-        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueKernelLaunch");
   auto currentRegular = currentCmdLists.lock();
   UR_CALL(currentRegular->activeBatch.appendKernelLaunch(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      numPropsInLaunchPropList, launchPropList, waitListView, /* numEventsInWaitList,
-      phEventWaitList, */
+      numPropsInLaunchPropList, launchPropList,
+      waitListView, /* numEventsInWaitList,
+phEventWaitList, */
       createEventIfRequestedRegular(
           phEvent,
           currentRegular->regularGenerationNumber))); // nullptr));
@@ -336,14 +337,15 @@ ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableWrite(
     ur_program_handle_t hProgram, const char *name, bool blockingWrite,
     size_t count, size_t offset, const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
-      wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatch = currentCmdLists.lock();
 
   UR_CALL(lockedBatch->activeBatch.appendDeviceGlobalVariableWrite(
-      hProgram, name, false, count, offset, pSrc, waitListView, /* numEventsInWaitList,
-      phEventWaitList, */
+      hProgram, name, false, count, offset, pSrc,
+      waitListView, /* numEventsInWaitList,
+phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber)));
 
@@ -358,14 +360,15 @@ ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableRead(
     ur_program_handle_t hProgram, const char *name, bool blockingRead,
     size_t count, size_t offset, void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
-    wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatch = currentCmdLists.lock();
 
   lockedBatch->activeBatch.appendDeviceGlobalVariableRead(
-      hProgram, name, blockingRead, count, offset, pDst, waitListView, /* numEventsInWaitList,
-      phEventWaitList, */
+      hProgram, name, blockingRead, count, offset, pDst,
+      waitListView, /* numEventsInWaitList,
+phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
   // return UR_RESULT_ERROR_INVALID_VALUE;
@@ -408,7 +411,8 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
 
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
-      blocking, pDst, pSrc, size, waitListView, /* numEventsInWaitList, phEventWaitList, */
+      blocking, pDst, pSrc, size,
+      waitListView, /* numEventsInWaitList, phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
 
