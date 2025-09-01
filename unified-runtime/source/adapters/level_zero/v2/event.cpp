@@ -134,7 +134,7 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
 }
 
 void ur_event_handle_t_::runBatch() {
-  printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
+  // printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
   if (batchGeneration != unbatchedQueue) {
     hQueue->runBatchIfActive(batchGeneration);
   }
