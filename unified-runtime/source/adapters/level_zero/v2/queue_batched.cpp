@@ -270,10 +270,11 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
     void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
+        TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
+
     wait_list_view waitListView =
         wait_list_view(phEventWaitList, numEventsInWaitList, this);
     // printf("I ENTER READ\n");
-    TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
 
     auto lockedBatches = currentCmdLists.lock();
     UR_CALL(lockedBatches->activeBatch.appendMemBufferRead(
@@ -300,9 +301,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     ur_mem_handle_t hBuffer, bool blockingWrite, size_t offset, size_t size,
     const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
-
-  wait_list_view waitListView =
-      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+      TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferWrite");
 
   // -------------- this is not my comment --------------------
 
@@ -311,8 +310,9 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
   // Responsibility of UMD to offload to copy engine
 
   // -------------- end of not my comment ---------------------
-  TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferWrite");
   // printf("I ENTER WRITE\n");
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatches = currentCmdLists.lock();
 
@@ -408,10 +408,10 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
   printf("memcpy batched\n");
   wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
-
+printf("after waitlist\n");
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
-      blocking, pDst, pSrc, size,
+      false, pDst, pSrc, size,
       waitListView, /* numEventsInWaitList, phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
