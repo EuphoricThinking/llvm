@@ -22,7 +22,6 @@ thread_local std::vector<ze_event_handle_t> waitList;
 
 wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
                                uint32_t numWaitEvents) {
-                                printf("OUTER ptr cnstr %p capac %ld size %ld\n", (void*)waitList.data(), waitList.capacity(), waitList.capacity());
   if (phWaitEvents == nullptr) {
     handles = nullptr;
     num = 0;
@@ -37,8 +36,6 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
       phWaitEvents[i]->runBatch();
       waitList[i] = phWaitEvents[i]->getZeEvent();
     }
-
-    printf("\tptr cnstr %p\n", (void*)waitList.data());
 
     handles = waitList.data();
   }
@@ -217,10 +214,7 @@ wait_list_view ur_command_list_manager::getWaitListView(
   // }
 
   wait_list_view waitlist = wait_list_view(phWaitEvents, numWaitEvents);
-  // printf("num %d max size %d\n", waitlist.num, waitlist.max_size);
-  printf("event %p num events %d capac %ld ptr %p handle %p\n", (void*) additionalWaitEvent, numWaitEvents, waitList.capacity(), (void*)waitList.data(), (void*)waitlist.handles);
   waitlist.addAdditionalEvent(additionalWaitEvent);
-  printf("ptr2 %p handle %p capac %ld size %ld\n", (void*)waitList.data(), (void*)waitlist.handles, waitList.capacity(), waitList.size());
 
   return waitlist;
   // return {waitList.data(), static_cast<uint32_t>(totalNumWaitEvents)};
