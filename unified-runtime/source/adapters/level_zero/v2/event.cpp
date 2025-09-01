@@ -19,7 +19,7 @@
 
 #include "../ur_interface_loader.hpp"
 
-ur_event_generation_t unbatchedQueue = 1;
+ur_event_generation_t unbatchedQueue = -1;
 
 static uint64_t adjustEndEventTimestamp(uint64_t adjustedStartTimestamp,
                                         uint64_t endTimestamp,
@@ -134,6 +134,7 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
 }
 
 void ur_event_handle_t_::runBatch() {
+  printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
   if (batchGeneration != unbatchedQueue) {
     hQueue->runBatchIfActive(batchGeneration);
   }
