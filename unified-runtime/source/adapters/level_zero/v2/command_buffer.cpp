@@ -325,7 +325,7 @@ ur_result_t urCommandBufferAppendKernelLaunchExp(
   auto eventsWaitList = commandBuffer->getWaitListFromSyncPoints(
       syncPointWaitList, numSyncPointsInWaitList);
 
-    wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(eventsWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendKernelLaunch(
@@ -353,11 +353,12 @@ ur_result_t urCommandBufferAppendUSMMemcpyExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
-      wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(eventsWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendUSMMemcpy(
-      false, pDst, pSrc, size, waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
+      false, pDst, pSrc, size,
+      waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
@@ -481,8 +482,9 @@ ur_result_t urCommandBufferAppendMemBufferCopyRectExp(
 
   UR_CALL(commandListLocked->appendMemBufferCopyRect(
       hSrcMem, hDstMem, srcOrigin, dstOrigin, region, srcRowPitch,
-      srcSlicePitch, dstRowPitch, dstSlicePitch, waitListView, /* numSyncPointsInWaitList,
-      eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
+      srcSlicePitch, dstRowPitch, dstSlicePitch,
+      waitListView, /* numSyncPointsInWaitList,
+eventsWaitList, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 } catch (...) {
