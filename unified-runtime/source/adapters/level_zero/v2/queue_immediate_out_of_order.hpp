@@ -359,18 +359,23 @@ phEventWaitList, */
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
                                  ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendUSMPrefetch(
-        pMem, size, flags, numEventsInWaitList, phEventWaitList,
+        pMem, size, flags, waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
   ur_result_t enqueueUSMAdvise(const void *pMem, size_t size,
                                ur_usm_advice_flags_t advice,
                                ur_event_handle_t *phEvent) override {
+    wait_list_view emptyWaitList = wait_list_view(nullptr, 0);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendUSMAdvise(
-        pMem, size, advice, 0, nullptr,
+        pMem, size, advice, emptyWaitList, /* 0, nullptr, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 

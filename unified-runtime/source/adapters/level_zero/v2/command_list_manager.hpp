@@ -176,13 +176,15 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
 const ur_event_handle_t *, */ ur_event_handle_t);
   ur_result_t appendUSMPrefetch(const void *pMem, size_t size,
                                 ur_usm_migration_flags_t flags,
-                                uint32_t numEventsInWaitList,
-                                const ur_event_handle_t *phEventWaitList,
+                                wait_list_view& waitListView,
+                                /* uint32_t numEventsInWaitList,
+                                const ur_event_handle_t *phEventWaitList, */
                                 ur_event_handle_t phEvent);
   ur_result_t appendUSMAdvise(const void *pMem, size_t size,
                               ur_usm_advice_flags_t advice,
-                              uint32_t numEventsInWaitList,
-                              const ur_event_handle_t *phEventWaitList,
+                              wait_list_view& waitListView,
+                              /* uint32_t numEventsInWaitList,
+                              const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
   ur_result_t
   appendDeviceGlobalVariableWrite(ur_program_handle_t hProgram,

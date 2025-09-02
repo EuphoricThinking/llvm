@@ -401,7 +401,8 @@ ur_command_list_manager::appendUSMFill(void *pMem, size_t patternSize,
 
 ur_result_t ur_command_list_manager::appendUSMPrefetch(
     const void *pMem, size_t size, ur_usm_migration_flags_t flags,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    wait_list_view& waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMPrefetch");
 
@@ -418,8 +419,8 @@ ur_result_t ur_command_list_manager::appendUSMPrefetch(
   }
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_PREFETCH);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
+      // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -440,15 +441,16 @@ ur_result_t ur_command_list_manager::appendUSMPrefetch(
 
 ur_result_t ur_command_list_manager::appendUSMAdvise(
     const void *pMem, size_t size, ur_usm_advice_flags_t advice,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    wait_list_view& waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMAdvise");
 
   auto zeAdvice = ur_cast<ze_memory_advice_t>(advice);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_ADVISE);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
+      // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
