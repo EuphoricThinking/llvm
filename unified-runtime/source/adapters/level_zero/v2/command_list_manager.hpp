@@ -172,7 +172,7 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
                               const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
   ur_result_t appendUSMFill2D(void *, size_t, size_t, const void *, size_t,
-                              size_t, uint32_t, const ur_event_handle_t *,
+                              size_t, wait_list_view&, /* uint32_t, const ur_event_handle_t *, */
                               ur_event_handle_t);
   ur_result_t appendUSMMemcpy2D(bool, void *, size_t, const void *, size_t,
                                 size_t, size_t, wait_list_view &,
@@ -208,14 +208,16 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t appendReadHostPipe(ur_program_handle_t hProgram,
                                  const char *pipe_symbol, bool blocking,
                                  void *pDst, size_t size,
-                                 uint32_t numEventsInWaitList,
-                                 const ur_event_handle_t *phEventWaitList,
+                                 wait_list_view& waitListView,
+                                 /* uint32_t numEventsInWaitList,
+                                 const ur_event_handle_t *phEventWaitList, */
                                  ur_event_handle_t phEvent);
   ur_result_t appendWriteHostPipe(ur_program_handle_t hProgram,
                                   const char *pipe_symbol, bool blocking,
                                   void *pSrc, size_t size,
-                                  uint32_t numEventsInWaitList,
-                                  const ur_event_handle_t *phEventWaitList,
+                                  wait_list_view& waitListView,
+                                  /* uint32_t numEventsInWaitList,
+                                  const ur_event_handle_t *phEventWaitList, */
                                   ur_event_handle_t phEvent);
   ur_result_t bindlessImagesImageCopyExp(
       const void *pSrc, void *pDst, const ur_image_desc_t *pSrcImageDesc,
@@ -223,16 +225,16 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
       const ur_image_format_t *pSrcImageFormat,
       const ur_image_format_t *pDstImageFormat,
       ur_exp_image_copy_region_t *pCopyRegion,
-      ur_exp_image_copy_flags_t imageCopyFlags, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      ur_exp_image_copy_flags_t imageCopyFlags, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t bindlessImagesWaitExternalSemaphoreExp(
       ur_exp_external_semaphore_handle_t hSemaphore, bool hasWaitValue,
-      uint64_t waitValue, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      uint64_t waitValue, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t bindlessImagesSignalExternalSemaphoreExp(
       ur_exp_external_semaphore_handle_t hSemaphore, bool hasSignalValue,
-      uint64_t signalValue, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
+      uint64_t signalValue, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t appendCooperativeKernelLaunchExp(
       ur_kernel_handle_t hKernel, uint32_t workDim,
       const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
@@ -261,7 +263,7 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
   appendNativeCommandExp(ur_exp_enqueue_native_command_function_t, void *,
                          uint32_t, const ur_mem_handle_t *,
                          const ur_exp_enqueue_native_command_properties_t *,
-                         uint32_t, const ur_event_handle_t *,
+                         wait_list_view&, /* uint32_t, const ur_event_handle_t *, */
                          ur_event_handle_t);
 
   ur_result_t appendUSMAllocHelper(
@@ -271,8 +273,8 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
       ur_event_handle_t phEvent, ur_usm_type_t type);
 
   ur_result_t appendUSMFreeExp(ur_queue_t_ *Queue, ur_usm_pool_handle_t,
-                               void *pMem, uint32_t numEventsInWaitList,
-                               const ur_event_handle_t *phEventWaitList,
+                               void *pMem, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+                               const ur_event_handle_t *phEventWaitList, */
                                ur_event_handle_t phEvent);
 
   v2::raii::command_list_unique_handle &&releaseCommandList();

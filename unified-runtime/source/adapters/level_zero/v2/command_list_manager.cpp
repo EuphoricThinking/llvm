@@ -847,8 +847,10 @@ ur_result_t ur_command_list_manager::appendMemUnmap(
 ur_result_t ur_command_list_manager::appendUSMFill2D(
     void * /*pMem*/, size_t /*pitch*/, size_t /*patternSize*/,
     const void * /*pPattern*/, size_t /*width*/, size_t /*height*/,
-    uint32_t /*numEventsInWaitList*/,
-    const ur_event_handle_t * /*phEventWaitList*/,
+    wait_list_view& /* waitListView */,
+    /*
+    uint32_t numEventsInWaitList,
+    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -919,8 +921,9 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
 ur_result_t ur_command_list_manager::appendReadHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pDst*/, size_t /*size*/,
-    uint32_t /*numEventsInWaitList*/,
-    const ur_event_handle_t * /*phEventWaitList*/,
+    wait_list_view& /* waitListView */, 
+    /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -928,8 +931,9 @@ ur_result_t ur_command_list_manager::appendReadHostPipe(
 ur_result_t ur_command_list_manager::appendWriteHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pSrc*/, size_t /*size*/,
-    uint32_t /*numEventsInWaitList*/,
-    const ur_event_handle_t * /*phEventWaitList*/,
+    wait_list_view& /* waitListView */,
+    /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -997,14 +1001,15 @@ ur_result_t ur_command_list_manager::appendUSMAllocHelper(
 
 ur_result_t ur_command_list_manager::appendUSMFreeExp(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t, void *pMem,
-    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    wait_list_view& waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFreeExp");
   assert(phEvent);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_ENQUEUE_USM_FREE_EXP);
-  auto [pWaitEvents, numWaitEvents, _] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;
+      // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   umf_memory_pool_handle_t hPool = nullptr;
   auto umfRet = umfPoolByPtr(pMem, &hPool);
@@ -1047,11 +1052,11 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
     const ur_image_format_t *pSrcImageFormat,
     const ur_image_format_t *pDstImageFormat,
     ur_exp_image_copy_region_t *pCopyRegion,
-    ur_exp_image_copy_flags_t imageCopyFlags, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    ur_exp_image_copy_flags_t imageCopyFlags, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_COPY);
-  auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
+  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   return bindlessImagesHandleCopyFlags(
       pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
@@ -1060,70 +1065,25 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
 }
 
 ur_result_t ur_command_list_manager::bindlessImagesWaitExternalSemaphoreExp(
-    ur_exp_external_semaphore_handle_t hSemaphore, bool hasWaitValue,
-    uint64_t waitValue, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
-  auto hPlatform = hContext->getPlatform();
-  if (hPlatform->ZeExternalSemaphoreExt.Supported == false) {
-    UR_LOG_LEGACY(ERR,
-                  logger::LegacyMessage("[UR][L0] {} function not supported!"),
-                  "{} function not supported!", __FUNCTION__);
-    return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
-  }
-
-  auto zeSignalEvent =
-      getSignalEvent(phEvent, UR_COMMAND_EXTERNAL_SEMAPHORE_WAIT_EXP);
-  auto [pWaitEvents, numWaitEvents] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
-
-  ze_external_semaphore_wait_params_ext_t waitParams = {
-      ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WAIT_PARAMS_EXT, nullptr, 0};
-  waitParams.value = hasWaitValue ? waitValue : 0;
-  ze_external_semaphore_ext_handle_t hExtSemaphore =
-      reinterpret_cast<ze_external_semaphore_ext_handle_t>(hSemaphore);
-  ZE2UR_CALL(hPlatform->ZeExternalSemaphoreExt
-                 .zexCommandListAppendWaitExternalSemaphoresExp,
-             (zeCommandList.get(), 1, &hExtSemaphore, &waitParams,
-              zeSignalEvent, numWaitEvents, pWaitEvents));
-
-  return UR_RESULT_SUCCESS;
+    ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasWaitValue*/,
+    uint64_t /*waitValue*/, wait_list_view& /* waitListView */, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t * phEventWaitList, */
+    ur_event_handle_t /*phEvent*/) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ur_result_t ur_command_list_manager::bindlessImagesSignalExternalSemaphoreExp(
-    ur_exp_external_semaphore_handle_t hSemaphore, bool hasSignalValue,
-    uint64_t signalValue, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
-  auto hPlatform = hContext->getPlatform();
-  if (hPlatform->ZeExternalSemaphoreExt.Supported == false) {
-    UR_LOG_LEGACY(ERR,
-                  logger::LegacyMessage("[UR][L0] {} function not supported!"),
-                  "{} function not supported!", __FUNCTION__);
-    return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
-  }
-
-  auto zeSignalEvent =
-      getSignalEvent(phEvent, UR_COMMAND_EXTERNAL_SEMAPHORE_SIGNAL_EXP);
-  auto [pWaitEvents, numWaitEvents] =
-      getWaitListView(phEventWaitList, numEventsInWaitList);
-
-  ze_external_semaphore_signal_params_ext_t signalParams = {
-      ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS_EXT, nullptr, 0};
-  signalParams.value = hasSignalValue ? signalValue : 0;
-  ze_external_semaphore_ext_handle_t hExtSemaphore =
-      reinterpret_cast<ze_external_semaphore_ext_handle_t>(hSemaphore);
-
-  ZE2UR_CALL(hPlatform->ZeExternalSemaphoreExt
-                 .zexCommandListAppendSignalExternalSemaphoresExp,
-             (zeCommandList.get(), 1, &hExtSemaphore, &signalParams,
-              zeSignalEvent, numWaitEvents, pWaitEvents));
-
-  return UR_RESULT_SUCCESS;
+    ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasSignalValue*/,
+    uint64_t /*signalValue*/, wait_list_view& /* waitListView */, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t * phEventWaitList, */
+    ur_event_handle_t /*phEvent*/) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ur_result_t ur_command_list_manager::appendNativeCommandExp(
     ur_exp_enqueue_native_command_function_t, void *, uint32_t,
     const ur_mem_handle_t *, const ur_exp_enqueue_native_command_properties_t *,
-    uint32_t, const ur_event_handle_t *, ur_event_handle_t) {
+   wait_list_view&,  /* uint32_t, const ur_event_handle_t *, */ ur_event_handle_t) {
   UR_LOG_LEGACY(
       ERR, logger::LegacyMessage("[UR][L0_v2] {} function not implemented!"),
       "{} function not implemented!", __FUNCTION__);
