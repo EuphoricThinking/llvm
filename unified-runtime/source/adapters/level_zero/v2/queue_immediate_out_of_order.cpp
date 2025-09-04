@@ -154,7 +154,7 @@ ur_result_t ur_queue_immediate_out_of_order_t::enqueueEventsWaitWithBarrier(
   // we do need to use barrier if profiling is enabled: see
   // zeCommandListAppendWaitOnEvents
   wait_list_view waitListView =
-        wait_list_view(phEventWaitList, numEventsInWaitList);
+      wait_list_view(phEventWaitList, numEventsInWaitList);
 
   bool needsRealBarrier = (flags & UR_QUEUE_FLAG_PROFILING_ENABLE) != 0;
   auto barrierFn = needsRealBarrier
@@ -165,23 +165,25 @@ ur_result_t ur_queue_immediate_out_of_order_t::enqueueEventsWaitWithBarrier(
 
   // Enqueue wait for the user-provider events on the first command list.
   UR_CALL(commandListManagersLocked[0].appendEventsWait(
-    waitListView,
-      /* numEventsInWaitList, phEventWaitList, */barrierEvents[0]));
+      waitListView,
+      /* numEventsInWaitList, phEventWaitList, */ barrierEvents[0]));
 
   wait_list_view emptyWaitlist = wait_list_view(nullptr, 0);
 
   // Request barrierEvents[id] to be signaled on remaining command lists.
   for (size_t id = 1; id < numCommandLists; id++) {
-    UR_CALL(commandListManagersLocked[id].appendEventsWait(emptyWaitlist, /*0, nullptr, */
-                                                           barrierEvents[id]));
+    UR_CALL(commandListManagersLocked[id].appendEventsWait(
+        emptyWaitlist, /*0, nullptr, */
+        barrierEvents[id]));
   }
 
   // Enqueue barriers on all command lists by waiting on barrierEvents.
 
   if (phEvent) {
     UR_CALL(
-        std::invoke(barrierFn, commandListManagersLocked[0], waitListView, /* numCommandLists,
-                    barrierEvents.data(), */
+        std::invoke(barrierFn, commandListManagersLocked[0],
+                    waitListView, /* numCommandLists,
+barrierEvents.data(), */
                     createEventIfRequested(eventPool.get(), phEvent, this)));
   }
 

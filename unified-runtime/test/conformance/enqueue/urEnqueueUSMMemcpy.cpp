@@ -121,7 +121,7 @@ TEST_P(urEnqueueUSMMemcpyTest, NonBlocking) {
   ASSERT_SUCCESS(urEnqueueUSMMemcpy(queue, false, device_dst, device_src,
                                     allocation_size, 0, nullptr,
                                     &memcpy_event));
-                                    // printf("enqueued memcpy\n");
+  // printf("enqueued memcpy\n");
   ASSERT_SUCCESS(urEventWait(1, &memcpy_event));
   // printf("can't wait\n");
   ASSERT_SUCCESS(urEventRelease(memcpy_event));

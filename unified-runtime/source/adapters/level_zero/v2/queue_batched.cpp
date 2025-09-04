@@ -270,7 +270,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferRead(
     void *pDst, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
   try {
-        TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
+    TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferRead");
 
     wait_list_view waitListView =
         wait_list_view(phEventWaitList, numEventsInWaitList, this);
@@ -301,7 +301,7 @@ ur_result_t ur_queue_batched_t::enqueueMemBufferWrite(
     ur_mem_handle_t hBuffer, bool blockingWrite, size_t offset, size_t size,
     const void *pSrc, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) try {
-      TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferWrite");
+  TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueMemBufferWrite");
 
   // -------------- this is not my comment --------------------
 
@@ -408,7 +408,7 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
   // printf("memcpy batched\n");
   wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
-// printf("after waitlist\n");
+  // printf("after waitlist\n");
   auto lockedBatch = currentCmdLists.lock();
   lockedBatch->activeBatch.appendUSMMemcpy(
       false, pDst, pSrc, size,
