@@ -137,7 +137,7 @@ public:
 
     auto lockedBatch = currentCmdLists.lock();
     return lockedBatch->activeBatch.appendEventsWait(
-      waitListView, 
+        waitListView,
         /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
                                       lockedBatch->regularGenerationNumber));

@@ -240,10 +240,14 @@ phEventWaitList, */
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemImageRead(
         hImage, blockingRead, origin, region, rowPitch, slicePitch, pDst,
-        numEventsInWaitList, phEventWaitList,
+        waitListView,
+        /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -254,10 +258,14 @@ phEventWaitList, */
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemImageWrite(
         hImage, blockingWrite, origin, region, rowPitch, slicePitch, pSrc,
-        numEventsInWaitList, phEventWaitList,
+        waitListView,
+        /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -267,10 +275,13 @@ phEventWaitList, */
                       ur_rect_region_t region, uint32_t numEventsInWaitList,
                       const ur_event_handle_t *phEventWaitList,
                       ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemImageCopy(
-        hImageSrc, hImageDst, srcOrigin, dstOrigin, region, numEventsInWaitList,
-        phEventWaitList,
+        hImageSrc, hImageDst, srcOrigin, dstOrigin, region, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -280,10 +291,13 @@ phEventWaitList, */
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent,
                                   void **ppRetMap) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemBufferMap(
-        hBuffer, blockingMap, mapFlags, offset, size, numEventsInWaitList,
-        phEventWaitList, createEventIfRequested(eventPool.get(), phEvent, this),
+        hBuffer, blockingMap, mapFlags, offset, size, waitListView, /* numEventsInWaitList,
+        phEventWaitList, */ createEventIfRequested(eventPool.get(), phEvent, this),
         ppRetMap);
   }
 
@@ -291,9 +305,12 @@ phEventWaitList, */
                               uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList,
                               ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendMemUnmap(
-        hMem, pMappedPtr, numEventsInWaitList, phEventWaitList,
+        hMem, pMappedPtr, waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -364,7 +381,8 @@ phEventWaitList, */
 
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId].appendUSMPrefetch(
-        pMem, size, flags, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        pMem, size, flags,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -531,10 +549,13 @@ phEventWaitList, */
   enqueueTimestampRecordingExp(bool blocking, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override {
+    wait_list_view waitListView =
+        wait_list_view(phEventWaitList, numEventsInWaitList);
+
     auto commandListId = getNextCommandListId();
     return commandListManagers.lock()[commandListId]
         .appendTimestampRecordingExp(
-            blocking, numEventsInWaitList, phEventWaitList,
+            blocking, waitListView, /* numEventsInWaitList, phEventWaitList, */
             createEventIfRequested(eventPool.get(), phEvent, this));
   }
 

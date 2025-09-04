@@ -632,11 +632,12 @@ ur_result_t urCommandBufferAppendUSMPrefetchExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
-      wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(eventsWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendUSMPrefetch(
-      pMemory, size, flags, waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
+      pMemory, size, flags,
+      waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
@@ -659,11 +660,12 @@ ur_result_t urCommandBufferAppendUSMAdviseExp(
   auto eventsWaitList = hCommandBuffer->getWaitListFromSyncPoints(
       pSyncPointWaitList, numSyncPointsInWaitList);
 
-      wait_list_view waitListView =
+  wait_list_view waitListView =
       wait_list_view(eventsWaitList, numSyncPointsInWaitList);
 
   UR_CALL(commandListLocked->appendUSMAdvise(
-      pMemory, size, advice, waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
+      pMemory, size, advice,
+      waitListView, /* numSyncPointsInWaitList, eventsWaitList, */
       hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
@@ -715,16 +717,18 @@ ur_result_t urCommandBufferAppendNativeCommandExp(
   wait_list_view waitListView =
       wait_list_view(eventsWaitList, numSyncPointsInWaitList);
 
-  UR_CALL(commandListLocked->appendEventsWaitWithBarrier(waitListView,
-      /* numSyncPointsInWaitList, eventsWaitList, */nullptr));
+  UR_CALL(commandListLocked->appendEventsWaitWithBarrier(
+      waitListView,
+      /* numSyncPointsInWaitList, eventsWaitList, */ nullptr));
 
   // Call user-defined function immediately
   pfnNativeCommand(pData);
 
   wait_list_view emptyWaitList = wait_list_view(nullptr, 0);
   // Barrier on all commands after user defined commands.
-  UR_CALL(commandListLocked->appendEventsWaitWithBarrier(emptyWaitList,
-      /* 0, nullptr, */hCommandBuffer->createEventIfRequested(pSyncPoint)));
+  UR_CALL(commandListLocked->appendEventsWaitWithBarrier(
+      emptyWaitList,
+      /* 0, nullptr, */ hCommandBuffer->createEventIfRequested(pSyncPoint)));
 
   return UR_RESULT_SUCCESS;
 }

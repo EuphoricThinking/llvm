@@ -67,11 +67,10 @@ struct ur_command_list_manager {
   /************ Generic queue methods *************/
   ur_result_t appendEventsWait(/*uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList, */
-                               wait_list_view& waitListView,
-                               ur_event_handle_t phEvent
-                              );
+                               wait_list_view &waitListView,
+                               ur_event_handle_t phEvent);
   ur_result_t
-  appendEventsWaitWithBarrier(wait_list_view& waitList,
+  appendEventsWaitWithBarrier(wait_list_view &waitList,
                               /* uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
@@ -87,13 +86,15 @@ struct ur_command_list_manager {
                                    /* uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList, */
                                    ur_event_handle_t phEvent);
-  ur_result_t appendMemBufferReadRect(
-      ur_mem_handle_t hBuffer, bool blockingRead, ur_rect_offset_t bufferOrigin,
-      ur_rect_offset_t hostOrigin, ur_rect_region_t region,
-      size_t bufferRowPitch, size_t bufferSlicePitch, size_t hostRowPitch,
-      size_t hostSlicePitch, void *pDst, wait_list_view &waitListView, /* uint32_t
-      numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
-      ur_event_handle_t phEvent);
+  ur_result_t
+  appendMemBufferReadRect(ur_mem_handle_t hBuffer, bool blockingRead,
+                          ur_rect_offset_t bufferOrigin,
+                          ur_rect_offset_t hostOrigin, ur_rect_region_t region,
+                          size_t bufferRowPitch, size_t bufferSlicePitch,
+                          size_t hostRowPitch, size_t hostSlicePitch,
+                          void *pDst, wait_list_view &waitListView, /* uint32_t
+   numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+                          ur_event_handle_t phEvent);
   ur_result_t
   appendMemBufferWriteRect(ur_mem_handle_t hBuffer, bool blockingWrite,
                            ur_rect_offset_t bufferOrigin,
@@ -131,30 +132,33 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
                                  ur_rect_offset_t origin,
                                  ur_rect_region_t region, size_t rowPitch,
                                  size_t slicePitch, void *pDst,
-                                 uint32_t numEventsInWaitList,
-                                 const ur_event_handle_t *phEventWaitList,
+                                 wait_list_view &waitListView,
+                                 /* uint32_t numEventsInWaitList,
+                                 const ur_event_handle_t *phEventWaitList, */
                                  ur_event_handle_t phEvent);
   ur_result_t appendMemImageWrite(ur_mem_handle_t hImage, bool blockingWrite,
                                   ur_rect_offset_t origin,
                                   ur_rect_region_t region, size_t rowPitch,
                                   size_t slicePitch, void *pSrc,
-                                  uint32_t numEventsInWaitList,
-                                  const ur_event_handle_t *phEventWaitList,
+                                  wait_list_view &waitListView,
+                                  /* uint32_t numEventsInWaitList,
+                                  const ur_event_handle_t *phEventWaitList, */
                                   ur_event_handle_t phEvent);
   ur_result_t
   appendMemImageCopy(ur_mem_handle_t hImageSrc, ur_mem_handle_t hImageDst,
                      ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
-                     ur_rect_region_t region, uint32_t numEventsInWaitList,
-                     const ur_event_handle_t *phEventWaitList,
+                     ur_rect_region_t region, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+                     const ur_event_handle_t *phEventWaitList, */
                      ur_event_handle_t phEvent);
   ur_result_t appendMemBufferMap(ur_mem_handle_t hBuffer, bool blockingMap,
                                  ur_map_flags_t mapFlags, size_t offset,
-                                 size_t size, uint32_t numEventsInWaitList,
-                                 const ur_event_handle_t *phEventWaitList,
+                                 size_t size, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+                                 const ur_event_handle_t *phEventWaitList, */
                                  ur_event_handle_t phEvent, void **ppRetMap);
   ur_result_t appendMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
-                             uint32_t numEventsInWaitList,
-                             const ur_event_handle_t *phEventWaitList,
+                              wait_list_view& waitListView,
+                             /* uint32_t numEventsInWaitList,
+                             const ur_event_handle_t *phEventWaitList, */
                              ur_event_handle_t phEvent);
   ur_result_t appendUSMFill(void *pMem, size_t patternSize,
                             const void *pPattern, size_t size,
@@ -176,13 +180,13 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
 const ur_event_handle_t *, */ ur_event_handle_t);
   ur_result_t appendUSMPrefetch(const void *pMem, size_t size,
                                 ur_usm_migration_flags_t flags,
-                                wait_list_view& waitListView,
+                                wait_list_view &waitListView,
                                 /* uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList, */
                                 ur_event_handle_t phEvent);
   ur_result_t appendUSMAdvise(const void *pMem, size_t size,
                               ur_usm_advice_flags_t advice,
-                              wait_list_view& waitListView,
+                              wait_list_view &waitListView,
                               /* uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
@@ -235,8 +239,9 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
       const size_t *pLocalWorkSize, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent);
   ur_result_t
-  appendTimestampRecordingExp(bool blocking, uint32_t numEventsInWaitList,
-                              const ur_event_handle_t *phEventWaitList,
+  appendTimestampRecordingExp(bool blocking,
+                              wait_list_view &waitListView, /* uint32_t
+               numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
                               ur_event_handle_t phEvent);
   ur_result_t
   appendCommandBufferExp(ur_exp_command_buffer_handle_t hCommandBuffer,
