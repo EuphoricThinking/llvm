@@ -92,6 +92,8 @@ private:
   // ur_result_t queueFinishReleaseKernelRenewBatch(locked<Batch>* batchLocked);
   ur_result_t queueFinishUnlocked(locked<batch_manager> &batchLocked);
 
+  ur_result_t queueFlushUnlocked(locked<batch_manager> &batchLocked);
+
 public:
   ur_queue_batched_t(ur_context_handle_t, ur_device_handle_t, uint32_t ordinal,
                      ze_command_queue_priority_t priority,
@@ -474,12 +476,12 @@ phEventWaitList, */
   ur_result_t enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, void *pMem,
                                 uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
-                                ur_event_handle_t *phEvent) override {
+                                ur_event_handle_t *phEvent) override; // {
     // return commandListManagerImmediate.lock()->appendUSMFreeExp(
     //     this, pPool, pMem, numEventsInWaitList, phEventWaitList,
     //     createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t bindlessImagesImageCopyExp(
       const void *pSrc, void *pDst, const ur_image_desc_t *pSrcImageDesc,

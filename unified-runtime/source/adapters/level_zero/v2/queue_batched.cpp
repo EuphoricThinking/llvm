@@ -423,6 +423,23 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
   return UR_RESULT_SUCCESS;
 }
 
+ur_result_t ur_queue_batched_t::enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, void *pMem,
+                                uint32_t numEventsInWaitList,
+                                const ur_event_handle_t *phEventWaitList,
+                                ur_event_handle_t *phEvent) {
+                                  wait_list_view waitListView =
+  wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  // printf("after waitlist\n");
+  auto lockedBatch = currentCmdLists.lock();
+
+  lockedBatch->activeBatch.appendUSMFreeExp(
+        this, pPool, pMem, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber));
+
+  return queueFlushUnlocked(lockedBatch);
+}
+
 // from in_order.cpp
 
 ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
@@ -473,13 +490,19 @@ ur_queue_batched_t::queueGetNativeHandle(ur_queue_native_desc_t * /*pDesc*/,
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_queue_batched_t::queueFlush() {
-  auto batchLocked = currentCmdLists.lock();
+ur_result_t ur_queue_batched_t::queueFlushUnlocked(locked<batch_manager> &batchLocked) {
   UR_CALL(
       enqueueCurrentBatchUnlocked(batchLocked->immediateList.getZeCommandList(),
                                   batchLocked->activeBatch.getZeCommandList()));
 
   return renewRegularUnlocked(batchLocked);
 }
+
+ur_result_t ur_queue_batched_t::queueFlush() {
+  auto batchLocked = currentCmdLists.lock();
+  return queueFlushUnlocked(batchLocked);
+}
+
+
 
 } // namespace v2
