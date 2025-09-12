@@ -247,8 +247,9 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
                               ur_event_handle_t phEvent);
   ur_result_t
   appendCommandBufferExp(ur_exp_command_buffer_handle_t hCommandBuffer,
-                         uint32_t numEventsInWaitList,
-                         const ur_event_handle_t *phEventWaitList,
+    wait_list_view& waitListView,
+                         /* uint32_t numEventsInWaitList,
+                         const ur_event_handle_t *phEventWaitList, */
                          ur_event_handle_t phEvent);
   ur_result_t appendKernelLaunch(
       ur_kernel_handle_t hKernel, uint32_t workDim,
@@ -268,8 +269,8 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
 
   ur_result_t appendUSMAllocHelper(
       ur_queue_t_ *Queue, ur_usm_pool_handle_t pPool, const size_t size,
-      const ur_exp_async_usm_alloc_properties_t *, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, void **ppMem,
+      const ur_exp_async_usm_alloc_properties_t *, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ void **ppMem,
       ur_event_handle_t phEvent, ur_usm_type_t type);
 
   ur_result_t appendUSMFreeExp(ur_queue_t_ *Queue, ur_usm_pool_handle_t,
@@ -284,8 +285,8 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent);
 private:
   ur_result_t appendGenericCommandListsExp(
       uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-      ur_event_handle_t phEvent, uint32_t numEventsInWaitList,
-      const ur_event_handle_t *phEventWaitList, ur_command_t callerCommand,
+      ur_event_handle_t phEvent, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList, */ur_command_t callerCommand,
       ur_event_handle_t additionalWaitEvent);
 
   void recordSubmittedKernel(ur_kernel_handle_t hKernel);

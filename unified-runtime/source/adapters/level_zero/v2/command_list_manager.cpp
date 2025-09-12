@@ -644,14 +644,15 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
 
 ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
     uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-    ur_event_handle_t phEvent, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_command_t callerCommand,
+    ur_event_handle_t phEvent, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ur_command_t callerCommand,
     ur_event_handle_t additionalWaitEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendGenericCommandListsExp");
 
   auto zeSignalEvent = getSignalEvent(phEvent, callerCommand);
-  auto [pWaitEvents, numWaitEvents, _] = getWaitListView(
-      phEventWaitList, numEventsInWaitList, additionalWaitEvent);
+  waitListView.addAdditionalEvent(additionalWaitEvent);
+  auto [pWaitEvents, numWaitEvents, _] = waitListView;// getWaitListView(
+      // phEventWaitList, numEventsInWaitList, additionalWaitEvent);
 
   ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
              (getZeCommandList(), numCommandLists, phCommandLists,
@@ -661,8 +662,8 @@ ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
 }
 
 ur_result_t ur_command_list_manager::appendCommandBufferExp(
-    ur_exp_command_buffer_handle_t hCommandBuffer, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, ur_event_handle_t phEvent) {
+    ur_exp_command_buffer_handle_t hCommandBuffer, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
 
   auto bufferCommandListLocked = hCommandBuffer->commandListManager.lock();
   ze_command_list_handle_t commandBufferCommandList =
@@ -679,8 +680,11 @@ ur_result_t ur_command_list_manager::appendCommandBufferExp(
   }
 
   UR_CALL(appendGenericCommandListsExp(
-      1, &commandBufferCommandList, phEvent, numEventsInWaitList,
-      phEventWaitList, UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP, executionEvent));
+      1, &commandBufferCommandList, phEvent, waitListView, /* numEventsInWaitList,
+      phEventWaitList, */ UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP,
+      nullptr));
+      // already synchronized
+      // executionEvent));
   UR_CALL(hCommandBuffer->registerExecutionEventUnlocked(phEvent));
 
   return UR_RESULT_SUCCESS;
@@ -926,8 +930,8 @@ ur_result_t ur_command_list_manager::appendWriteHostPipe(
 
 ur_result_t ur_command_list_manager::appendUSMAllocHelper(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t pPool, const size_t size,
-    const ur_exp_async_usm_alloc_properties_t *, uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, void **ppMem,
+    const ur_exp_async_usm_alloc_properties_t *, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, */ void **ppMem,
     ur_event_handle_t phEvent, ur_usm_type_t type) {
   if (!pPool) {
     pPool = hContext->getAsyncPool();
@@ -948,8 +952,9 @@ ur_result_t ur_command_list_manager::appendUSMAllocHelper(
     std::tie(*ppMem, originAllocEvent) = *asyncAlloc;
   }
 
-  auto waitListView =
-      getWaitListView(phEventWaitList, numEventsInWaitList, originAllocEvent);
+  // auto waitListView =
+  //     getWaitListView(phEventWaitList, numEventsInWaitList, originAllocEvent);
+  waitListView.addAdditionalEvent(originAllocEvent);
 
   ur_command_t commandType = UR_COMMAND_FORCE_UINT32;
   switch (type) {
