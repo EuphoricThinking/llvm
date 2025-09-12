@@ -87,6 +87,21 @@ ur_event_handle_t ur_queue_batched_t::createEventIfRequestedRegular(
   return (*phEvent);
 }
 
+ur_event_handle_t ur_queue_batched_t::createEventAndRetainRegular(
+                                                     ur_event_handle_t *phEvent,
+                                                     ur_event_generation_t batch_generation) {
+  auto hEvent = eventPoolRegular->allocate();
+  hEvent->setQueue(this);
+  hEvent->setBatch(batch_generation);
+
+  if (phEvent) {
+    (*phEvent) = hEvent;
+    hEvent->retain();
+  }
+
+  return hEvent;
+}
+
 ur_result_t ur_queue_batched_t::renewRegular() {
   auto lockedBatches = currentCmdLists.lock();
 
@@ -434,7 +449,7 @@ ur_result_t ur_queue_batched_t::enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, vo
 
   lockedBatch->activeBatch.appendUSMFreeExp(
         this, pPool, pMem, waitListView, /* numEventsInWaitList, phEventWaitList, */
-        createEventIfRequestedRegular(phEvent,
+        createEventAndRetainRegular(phEvent,
                                     lockedBatch->regularGenerationNumber));
 
   return queueFlushUnlocked(lockedBatch);

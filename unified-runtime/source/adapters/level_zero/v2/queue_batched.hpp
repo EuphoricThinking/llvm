@@ -83,6 +83,8 @@ private:
   createEventIfRequestedRegular(ur_event_handle_t *phEvent,
                                 ur_event_generation_t generation_number);
 
+  ur_event_handle_t createEventAndRetainRegular(ur_event_handle_t *phEvent, ur_event_generation_t batch_generation);                              
+
   // ur_result_t enqueueCurrentBatch(ze_command_list_handle_t immediateList,
   // ze_command_list_handle_t regularList);
   ur_result_t
