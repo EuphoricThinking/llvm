@@ -310,24 +310,24 @@ phEventWaitList, */
                                   size_t size, uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent,
-                                  void **ppRetMap) override {
+                                  void **ppRetMap) override; // {
     // return commandListManagerImmediate.lock()->appendMemBufferMap(
     //     hBuffer, blockingMap, mapFlags, offset, size, numEventsInWaitList,
     //     phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
     //     ppRetMap);
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
                               uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList,
-                              ur_event_handle_t *phEvent) override {
+                              ur_event_handle_t *phEvent) override; //{
     // return commandListManagerImmediate.lock()->appendMemUnmap(
     //     hMem, pMappedPtr, numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMFill(void *pMem, size_t patternSize,
                              const void *pPattern, size_t size,
