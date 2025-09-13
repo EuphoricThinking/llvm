@@ -438,11 +438,13 @@ ur_result_t ur_queue_batched_t::enqueueUSMMemcpy(
   return UR_RESULT_SUCCESS;
 }
 
+// rest
+
 ur_result_t ur_queue_batched_t::enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, void *pMem,
                                 uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) {
-                                  wait_list_view waitListView =
+  wait_list_view waitListView =
   wait_list_view(phEventWaitList, numEventsInWaitList, this);
   // printf("after waitlist\n");
   auto lockedBatch = currentCmdLists.lock();
@@ -453,6 +455,40 @@ ur_result_t ur_queue_batched_t::enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, vo
                                     lockedBatch->regularGenerationNumber));
 
   return queueFlushUnlocked(lockedBatch);
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemBufferMap(ur_mem_handle_t hBuffer, bool blockingMap,
+                                  ur_map_flags_t mapFlags, size_t offset,
+                                  size_t size, uint32_t numEventsInWaitList,
+                                  const ur_event_handle_t *phEventWaitList,
+                                  ur_event_handle_t *phEvent,
+                                  void **ppRetMap) {
+
+  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  // printf("after waitlist\n");
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->activeBatch.appendMemBufferMap(
+        hBuffer, false, mapFlags, offset, size, waitListView, createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber),
+        ppRetMap));
+
+  if (blockingMap) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
+                              uint32_t numEventsInWaitList,
+                              const ur_event_handle_t *phEventWaitList,
+                              ur_event_handle_t *phEvent) {
+  wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  // printf("after waitlist\n");
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->activeBatch.appendMemUnmap(
+        hMem, pMappedPtr, waitListView, createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
 }
 
 // from in_order.cpp
