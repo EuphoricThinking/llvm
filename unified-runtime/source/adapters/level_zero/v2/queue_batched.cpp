@@ -491,6 +491,56 @@ ur_result_t ur_queue_batched_t::enqueueMemUnmap(ur_mem_handle_t hMem, void *pMap
         hMem, pMappedPtr, waitListView, createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber));
 }
 
+ur_result_t ur_queue_batched_t::enqueueMemBufferReadRect(
+      ur_mem_handle_t hBuffer, bool blockingRead, ur_rect_offset_t bufferOrigin,
+      ur_rect_offset_t hostOrigin, ur_rect_region_t region,
+      size_t bufferRowPitch, size_t bufferSlicePitch, size_t hostRowPitch,
+      size_t hostSlicePitch, void *pDst, uint32_t numEventsInWaitList,
+      const ur_event_handle_t *phEventWaitList,
+      ur_event_handle_t *phEvent) {
+wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->activeBatch.appendMemBufferReadRect(
+        hBuffer, false, bufferOrigin, hostOrigin, region, bufferRowPitch,
+        bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst, waitListView, createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber)
+      ));
+
+  if (blockingRead) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemBufferWriteRect(
+      ur_mem_handle_t hBuffer, bool blockingWrite,
+      ur_rect_offset_t bufferOrigin, ur_rect_offset_t hostOrigin,
+      ur_rect_region_t region, size_t bufferRowPitch, size_t bufferSlicePitch,
+      size_t hostRowPitch, size_t hostSlicePitch, void *pSrc,
+      uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+      ur_event_handle_t *phEvent) {
+
+        wait_list_view waitListView = wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->activeBatch.appendMemBufferWriteRect(
+        hBuffer, false, bufferOrigin, hostOrigin, region,
+        bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
+        waitListView, createEventIfRequestedRegular(phEvent, lockedBatch->regularGenerationNumber)));
+
+    if (blockingWrite) {
+      UR_CALL(queueFinishUnlocked(lockedBatch));
+    }
+
+    return UR_RESULT_SUCCESS;
+}
+
+
+
+
+
+
 // from in_order.cpp
 
 ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
