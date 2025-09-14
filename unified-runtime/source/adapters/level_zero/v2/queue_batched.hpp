@@ -193,14 +193,14 @@ public:
       size_t bufferRowPitch, size_t bufferSlicePitch, size_t hostRowPitch,
       size_t hostSlicePitch, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
+      ur_event_handle_t *phEvent) override; //{
     // return commandListManagerImmediate.lock()->appendMemBufferReadRect(
     //     hBuffer, blockingRead, bufferOrigin, hostOrigin, region,
     //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst,
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemBufferWriteRect(
       ur_mem_handle_t hBuffer, bool blockingWrite,
@@ -208,14 +208,14 @@ public:
       ur_rect_region_t region, size_t bufferRowPitch, size_t bufferSlicePitch,
       size_t hostRowPitch, size_t hostSlicePitch, void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
+      ur_event_handle_t *phEvent) override; //{
     // return commandListManagerImmediate.lock()->appendMemBufferWriteRect(
     //     hBuffer, blockingWrite, bufferOrigin, hostOrigin, region,
     //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemBufferCopy(ur_mem_handle_t hBufferSrc,
                                    ur_mem_handle_t hBufferDst, size_t srcOffset,
