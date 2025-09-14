@@ -83,7 +83,9 @@ private:
   createEventIfRequestedRegular(ur_event_handle_t *phEvent,
                                 ur_event_generation_t generation_number);
 
-  ur_event_handle_t createEventAndRetainRegular(ur_event_handle_t *phEvent, ur_event_generation_t batch_generation);                              
+  ur_event_handle_t
+  createEventAndRetainRegular(ur_event_handle_t *phEvent,
+                              ur_event_generation_t batch_generation);
 
   // ur_result_t enqueueCurrentBatch(ze_command_list_handle_t immediateList,
   // ze_command_list_handle_t regularList);
@@ -194,12 +196,12 @@ public:
       size_t hostSlicePitch, void *pDst, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override; //{
-    // return commandListManagerImmediate.lock()->appendMemBufferReadRect(
-    //     hBuffer, blockingRead, bufferOrigin, hostOrigin, region,
-    //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // return commandListManagerImmediate.lock()->appendMemBufferReadRect(
+  //     hBuffer, blockingRead, bufferOrigin, hostOrigin, region,
+  //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pDst,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
   ur_result_t enqueueMemBufferWriteRect(
@@ -209,11 +211,11 @@ public:
       size_t hostRowPitch, size_t hostSlicePitch, void *pSrc,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override; //{
-    // return commandListManagerImmediate.lock()->appendMemBufferWriteRect(
-    //     hBuffer, blockingWrite, bufferOrigin, hostOrigin, region,
-    //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendMemBufferWriteRect(
+  //     hBuffer, blockingWrite, bufferOrigin, hostOrigin, region,
+  //     bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch, pSrc,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
@@ -311,22 +313,22 @@ phEventWaitList, */
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent,
                                   void **ppRetMap) override; // {
-    // return commandListManagerImmediate.lock()->appendMemBufferMap(
-    //     hBuffer, blockingMap, mapFlags, offset, size, numEventsInWaitList,
-    //     phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
-    //     ppRetMap);
-    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // return commandListManagerImmediate.lock()->appendMemBufferMap(
+  //     hBuffer, blockingMap, mapFlags, offset, size, numEventsInWaitList,
+  //     phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+  //     ppRetMap);
+  // return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
   ur_result_t enqueueMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
                               uint32_t numEventsInWaitList,
                               const ur_event_handle_t *phEventWaitList,
                               ur_event_handle_t *phEvent) override; //{
-    // return commandListManagerImmediate.lock()->appendMemUnmap(
-    //     hMem, pMappedPtr, numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    // return UR_RESULT_ERROR_INVALID_VALUE;
+  // return commandListManagerImmediate.lock()->appendMemUnmap(
+  //     hMem, pMappedPtr, numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
   ur_result_t enqueueUSMFill(void *pMem, size_t patternSize,
@@ -390,12 +392,12 @@ phEventWaitList, */
 
   ur_result_t enqueueUSMAdvise(const void *pMem, size_t size,
                                ur_usm_advice_flags_t advice,
-                               ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendUSMAdvise(
-    //     pMem, size, advice, 0, nullptr,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                               ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendUSMAdvise(
+  //     pMem, size, advice, 0, nullptr,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueDeviceGlobalVariableWrite(
       ur_program_handle_t hProgram, const char *name, bool blockingWrite,
@@ -479,9 +481,9 @@ phEventWaitList, */
                                 uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
                                 ur_event_handle_t *phEvent) override; // {
-    // return commandListManagerImmediate.lock()->appendUSMFreeExp(
-    //     this, pPool, pMem, numEventsInWaitList, phEventWaitList,
-    //     createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
+  // return commandListManagerImmediate.lock()->appendUSMFreeExp(
+  //     this, pPool, pMem, numEventsInWaitList, phEventWaitList,
+  //     createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 

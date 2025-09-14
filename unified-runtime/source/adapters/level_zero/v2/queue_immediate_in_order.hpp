@@ -251,12 +251,13 @@ phEventWaitList,*/
                       ur_rect_region_t region, uint32_t numEventsInWaitList,
                       const ur_event_handle_t *phEventWaitList,
                       ur_event_handle_t *phEvent) override {
-     wait_list_view waitListView =
+    wait_list_view waitListView =
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendMemImageCopy(
-        hImageSrc, hImageDst, srcOrigin, dstOrigin, region, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hImageSrc, hImageDst, srcOrigin, dstOrigin, region,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -269,10 +270,12 @@ phEventWaitList,*/
     wait_list_view waitListView =
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
-    return commandListManager.lock()->appendMemBufferMap(
-        hBuffer, blockingMap, mapFlags, offset, size, waitListView,/* numEventsInWaitList,
-        phEventWaitList, */ createEventIfRequested(eventPool.get(), phEvent, this),
-        ppRetMap);
+    return commandListManager.lock()->appendMemBufferMap(hBuffer, blockingMap,
+                                                         mapFlags, offset, size,
+                                                         waitListView,
+                                                         /* numEventsInWaitList,
+phEventWaitList, */ createEventIfRequested(eventPool.get(), phEvent, this),
+                                                         ppRetMap);
   }
 
   ur_result_t enqueueMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
@@ -283,7 +286,8 @@ phEventWaitList,*/
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendMemUnmap(
-        hMem, pMappedPtr, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        hMem, pMappedPtr,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -322,8 +326,9 @@ phEventWaitList,*/
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendUSMFill2D(
-        pMem, pitch, patternSize, pPattern, width, height, waitListView,/* numEventsInWaitList,
-        phEventWaitList, */
+        pMem, pitch, patternSize, pPattern, width, height,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -406,8 +411,9 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendReadHostPipe(
-        hProgram, pipe_symbol, blocking, pDst, size, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hProgram, pipe_symbol, blocking, pDst, size,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -421,8 +427,9 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendWriteHostPipe(
-        hProgram, pipe_symbol, blocking, pSrc, size, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hProgram, pipe_symbol, blocking, pSrc, size,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -435,7 +442,8 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendUSMAllocHelper(
-        this, pPool, size, pProperties, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        this, pPool, size, pProperties,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
         UR_USM_TYPE_DEVICE);
   }
@@ -449,7 +457,8 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendUSMAllocHelper(
-        this, pPool, size, pProperties, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        this, pPool, size, pProperties,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
         UR_USM_TYPE_SHARED);
   }
@@ -464,7 +473,8 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendUSMAllocHelper(
-        this, pPool, size, pProperties, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        this, pPool, size, pProperties,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         ppMem, createEventIfRequested(eventPool.get(), phEvent, this),
         UR_USM_TYPE_HOST);
   }
@@ -477,7 +487,8 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendUSMFreeExp(
-        this, pPool, pMem, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        this, pPool, pMem,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventAndRetain(eventPool.get(), phEvent, this));
   }
 
@@ -495,8 +506,9 @@ phEventWaitList, */
 
     return commandListManager.lock()->bindlessImagesImageCopyExp(
         pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
-        pDstImageFormat, pCopyRegion, imageCopyFlags, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        pDstImageFormat, pCopyRegion, imageCopyFlags,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -509,8 +521,9 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->bindlessImagesWaitExternalSemaphoreExp(
-        hSemaphore, hasWaitValue, waitValue, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hSemaphore, hasWaitValue, waitValue,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -523,8 +536,9 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->bindlessImagesSignalExternalSemaphoreExp(
-        hSemaphore, hasSignalValue, signalValue, waitListView, /* numEventsInWaitList,
-        phEventWaitList, */
+        hSemaphore, hasSignalValue, signalValue,
+        waitListView, /* numEventsInWaitList,
+phEventWaitList, */
         createEventIfRequested(eventPool.get(), phEvent, this));
   }
 
@@ -549,7 +563,8 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList);
 
     return commandListManager.lock()->appendCommandBufferExp(
-        hCommandBuffer, waitListView, /* numEventsInWaitList, phEventWaitList, */
+        hCommandBuffer,
+        waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventAndRetain(eventPool.get(), phEvent, this));
   }
 
