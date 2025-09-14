@@ -658,15 +658,17 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
 
 ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
     uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-    ur_event_handle_t phEvent, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ur_command_t callerCommand,
-    ur_event_handle_t additionalWaitEvent) {
+    ur_event_handle_t phEvent, wait_list_view &waitListView, /* uint32_t
+    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    ur_command_t callerCommand, ur_event_handle_t additionalWaitEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendGenericCommandListsExp");
 
   auto zeSignalEvent = getSignalEvent(phEvent, callerCommand);
   waitListView.addAdditionalEvent(additionalWaitEvent);
-  auto [pWaitEvents, numWaitEvents, _] = waitListView;// getWaitListView(
-      // phEventWaitList, numEventsInWaitList, additionalWaitEvent);
+  auto [pWaitEvents, numWaitEvents, _] =
+      waitListView; // getWaitListView(
+                    // phEventWaitList, numEventsInWaitList,
+                    // additionalWaitEvent);
 
   ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
              (getZeCommandList(), numCommandLists, phCommandLists,
@@ -675,9 +677,12 @@ ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_command_list_manager::appendCommandBufferExp(
-    ur_exp_command_buffer_handle_t hCommandBuffer, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+ur_result_t
+ur_command_list_manager::appendCommandBufferExp(ur_exp_command_buffer_handle_t
+                                                    hCommandBuffer,
+                                                wait_list_view &waitListView,
+                                                /* uint32_t numEventsInWaitList,
+const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
 
   auto bufferCommandListLocked = hCommandBuffer->commandListManager.lock();
   ze_command_list_handle_t commandBufferCommandList =
@@ -693,12 +698,11 @@ ur_result_t ur_command_list_manager::appendCommandBufferExp(
                (executionEvent->getZeEvent(), UINT64_MAX));
   }
 
-  UR_CALL(appendGenericCommandListsExp(
-      1, &commandBufferCommandList, phEvent, waitListView, /* numEventsInWaitList,
-      phEventWaitList, */ UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP,
-      nullptr));
-      // already synchronized
-      // executionEvent));
+  UR_CALL(appendGenericCommandListsExp(1, &commandBufferCommandList, phEvent,
+                                       waitListView, /* numEventsInWaitList,
+phEventWaitList, */ UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP, nullptr));
+  // already synchronized
+  // executionEvent));
   UR_CALL(hCommandBuffer->registerExecutionEventUnlocked(phEvent));
 
   return UR_RESULT_SUCCESS;
@@ -763,7 +767,8 @@ ur_result_t ur_command_list_manager::appendMemImageWrite(
 ur_result_t ur_command_list_manager::appendMemImageCopy(
     ur_mem_handle_t hSrc, ur_mem_handle_t hDst, ur_rect_offset_t srcOrigin,
     ur_rect_offset_t dstOrigin, ur_rect_region_t region,
-    wait_list_view& waitListView, /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView, /* uint32_t numEventsInWaitList, const
+                                     ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemImageWrite");
 
@@ -787,11 +792,15 @@ ur_result_t ur_command_list_manager::appendMemImageCopy(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_command_list_manager::appendMemBufferMap(
-    ur_mem_handle_t hMem, bool blockingMap, ur_map_flags_t mapFlags,
-    size_t offset, size_t size, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
-    void **ppRetMap) {
+ur_result_t
+ur_command_list_manager::appendMemBufferMap(ur_mem_handle_t hMem,
+                                            bool blockingMap,
+                                            ur_map_flags_t mapFlags,
+                                            size_t offset, size_t size,
+                                            wait_list_view &waitListView,
+                                            /* uint32_t numEventsInWaitList,
+const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
+                                            void **ppRetMap) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferMap");
 
   auto hBuffer = hMem->getBuffer();
@@ -823,9 +832,11 @@ ur_result_t ur_command_list_manager::appendMemBufferMap(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_command_list_manager::appendMemUnmap(
-    ur_mem_handle_t hMem, void *pMappedPtr, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+ur_result_t
+ur_command_list_manager::appendMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
+                                        wait_list_view &waitListView, /* uint32_t
+numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+                                        ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemUnmap");
 
   auto hBuffer = hMem->getBuffer();
@@ -851,7 +862,7 @@ ur_result_t ur_command_list_manager::appendMemUnmap(
 ur_result_t ur_command_list_manager::appendUSMFill2D(
     void * /*pMem*/, size_t /*pitch*/, size_t /*patternSize*/,
     const void * /*pPattern*/, size_t /*width*/, size_t /*height*/,
-    wait_list_view& /* waitListView */,
+    wait_list_view & /* waitListView */,
     /*
     uint32_t numEventsInWaitList,
     const ur_event_handle_t * phEventWaitList, */
@@ -925,7 +936,7 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
 ur_result_t ur_command_list_manager::appendReadHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pDst*/, size_t /*size*/,
-    wait_list_view& /* waitListView */, 
+    wait_list_view & /* waitListView */,
     /* uint32_t numEventsInWaitList,
     const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
@@ -935,7 +946,7 @@ ur_result_t ur_command_list_manager::appendReadHostPipe(
 ur_result_t ur_command_list_manager::appendWriteHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pSrc*/, size_t /*size*/,
-    wait_list_view& /* waitListView */,
+    wait_list_view & /* waitListView */,
     /* uint32_t numEventsInWaitList,
     const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
@@ -944,9 +955,10 @@ ur_result_t ur_command_list_manager::appendWriteHostPipe(
 
 ur_result_t ur_command_list_manager::appendUSMAllocHelper(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t pPool, const size_t size,
-    const ur_exp_async_usm_alloc_properties_t *, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ void **ppMem,
-    ur_event_handle_t phEvent, ur_usm_type_t type) {
+    const ur_exp_async_usm_alloc_properties_t *, wait_list_view &waitListView,
+    /* uint32_t numEventsInWaitList,
+const ur_event_handle_t *phEventWaitList, */
+    void **ppMem, ur_event_handle_t phEvent, ur_usm_type_t type) {
   if (!pPool) {
     pPool = hContext->getAsyncPool();
   }
@@ -967,7 +979,8 @@ ur_result_t ur_command_list_manager::appendUSMAllocHelper(
   }
 
   // auto waitListView =
-  //     getWaitListView(phEventWaitList, numEventsInWaitList, originAllocEvent);
+  //     getWaitListView(phEventWaitList, numEventsInWaitList,
+  //     originAllocEvent);
   waitListView.addAdditionalEvent(originAllocEvent);
 
   ur_command_t commandType = UR_COMMAND_FORCE_UINT32;
@@ -1006,15 +1019,16 @@ ur_result_t ur_command_list_manager::appendUSMAllocHelper(
 
 ur_result_t ur_command_list_manager::appendUSMFreeExp(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t, void *pMem,
-    wait_list_view& waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView,
+    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFreeExp");
   assert(phEvent);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_ENQUEUE_USM_FREE_EXP);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-      // getWaitListView(phEventWaitList, numEventsInWaitList);
+  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   umf_memory_pool_handle_t hPool = nullptr;
   auto umfRet = umfPoolByPtr(pMem, &hPool);
@@ -1057,8 +1071,9 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
     const ur_image_format_t *pSrcImageFormat,
     const ur_image_format_t *pDstImageFormat,
     ur_exp_image_copy_region_t *pCopyRegion,
-    ur_exp_image_copy_flags_t imageCopyFlags, wait_list_view& waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+    ur_exp_image_copy_flags_t imageCopyFlags, wait_list_view &waitListView, /* uint32_t
+    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    ur_event_handle_t phEvent) {
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_COPY);
   // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
@@ -1071,16 +1086,16 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
 
 ur_result_t ur_command_list_manager::bindlessImagesWaitExternalSemaphoreExp(
     ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasWaitValue*/,
-    uint64_t /*waitValue*/, wait_list_view& /* waitListView */, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t * phEventWaitList, */
+    uint64_t /*waitValue*/, wait_list_view & /* waitListView */, /* uint32_t
+     numEventsInWaitList, const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ur_result_t ur_command_list_manager::bindlessImagesSignalExternalSemaphoreExp(
     ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasSignalValue*/,
-    uint64_t /*signalValue*/, wait_list_view& /* waitListView */, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t * phEventWaitList, */
+    uint64_t /*signalValue*/, wait_list_view & /* waitListView */, /* uint32_t
+     numEventsInWaitList, const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -1088,7 +1103,8 @@ ur_result_t ur_command_list_manager::bindlessImagesSignalExternalSemaphoreExp(
 ur_result_t ur_command_list_manager::appendNativeCommandExp(
     ur_exp_enqueue_native_command_function_t, void *, uint32_t,
     const ur_mem_handle_t *, const ur_exp_enqueue_native_command_properties_t *,
-   wait_list_view&,  /* uint32_t, const ur_event_handle_t *, */ ur_event_handle_t) {
+    wait_list_view &,
+    /* uint32_t, const ur_event_handle_t *, */ ur_event_handle_t) {
   UR_LOG_LEGACY(
       ERR, logger::LegacyMessage("[UR][L0_v2] {} function not implemented!"),
       "{} function not implemented!", __FUNCTION__);
