@@ -152,6 +152,7 @@ public:
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   }
+  
   ur_result_t
   enqueueEventsWaitWithBarrierExt(const ur_exp_enqueue_ext_properties_t *,
                                   uint32_t numEventsInWaitList,
@@ -245,14 +246,14 @@ phEventWaitList, */
       ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
       size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
+      ur_event_handle_t *phEvent) override; //{
     // return commandListManagerImmediate.lock()->appendMemBufferCopyRect(
     //     hBufferSrc, hBufferDst, srcOrigin, dstOrigin, region, srcRowPitch,
     //     srcSlicePitch, dstRowPitch, dstSlicePitch, numEventsInWaitList,
     //     phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemBufferFill(ur_mem_handle_t hBuffer,
                                    const void *pPattern, size_t patternSize,
@@ -383,12 +384,12 @@ phEventWaitList, */
                                  ur_usm_migration_flags_t flags,
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
-                                 ur_event_handle_t *phEvent) override {
+                                 ur_event_handle_t *phEvent) override; // {
     // return commandListManagerImmediate.lock()->appendUSMPrefetch(
     //     pMem, size, flags, numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMAdvise(const void *pMem, size_t size,
                                ur_usm_advice_flags_t advice,
