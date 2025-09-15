@@ -358,26 +358,26 @@ phEventWaitList, */
                                const void *pPattern, size_t width,
                                size_t height, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
-                               ur_event_handle_t *phEvent) override {
+                               ur_event_handle_t *phEvent) override; //{
     // return commandListManagerImmediate.lock()->appendUSMFill2D(
     //     pMem, pitch, patternSize, pPattern, width, height,
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMMemcpy2D(bool blocking, void *pDst, size_t dstPitch,
                                  const void *pSrc, size_t srcPitch,
                                  size_t width, size_t height,
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
-                                 ur_event_handle_t *phEvent) override {
+                                 ur_event_handle_t *phEvent) override; // {
     // return commandListManagerImmediate.lock()->appendUSMMemcpy2D(
     //     blocking, pDst, dstPitch, pSrc, srcPitch, width, height,
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMPrefetch(const void *pMem, size_t size,
                                  ur_usm_migration_flags_t flags,

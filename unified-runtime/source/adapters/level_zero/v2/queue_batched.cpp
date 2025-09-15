@@ -554,6 +554,47 @@ ur_result_t ur_queue_batched_t::enqueueUSMAdvise(const void *pMem, size_t size,
                                     lockedBatch->regularGenerationNumber));
 }
 
+ur_result_t ur_queue_batched_t::enqueueUSMMemcpy2D(bool blocking, void *pDst, size_t dstPitch,
+                                 const void *pSrc, size_t srcPitch,
+                                 size_t width, size_t height,
+                                 uint32_t numEventsInWaitList,
+                                 const ur_event_handle_t *phEventWaitList,
+                                 ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->activeBatch.appendUSMMemcpy2D(
+        false, pDst, dstPitch, pSrc, srcPitch, width, height, waitListView, createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber)));
+
+  if (blocking) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+
+ur_result_t ur_queue_batched_t::enqueueUSMFill2D(void *pMem, size_t pitch, size_t patternSize,
+                               const void *pPattern, size_t width,
+                               size_t height, uint32_t numEventsInWaitList,
+                               const ur_event_handle_t *phEventWaitList,
+                               ur_event_handle_t *phEvent) {
+                                wait_list_view waitListView =
+  wait_list_view(phEventWaitList, numEventsInWaitList, this);
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->activeBatch.appendUSMFill2D(
+        pMem, pitch, patternSize, pPattern, width, height,
+        waitListView, createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->regularGenerationNumber));
+}
+
+
+
+
+
 // from in_order.cpp
 
 ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,
