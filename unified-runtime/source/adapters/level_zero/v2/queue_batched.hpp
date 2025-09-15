@@ -142,17 +142,20 @@ public:
         wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
     auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->activeBatch.appendEventsWait(
+     
+    UR_CALL(lockedBatch->activeBatch.appendEventsWait(
         waitListView,
         /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->regularGenerationNumber));
+                                      lockedBatch->regularGenerationNumber)));
+
+    return queueFlushUnlocked(lockedBatch);
     // return UR_RESULT_ERROR_INVALID_VALUE;
     // return commandListManagerImmediate.lock()->appendEventsWait(
     //     numEventsInWaitList, phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   }
-  
+
   ur_result_t
   enqueueEventsWaitWithBarrierExt(const ur_exp_enqueue_ext_properties_t *,
                                   uint32_t numEventsInWaitList,
