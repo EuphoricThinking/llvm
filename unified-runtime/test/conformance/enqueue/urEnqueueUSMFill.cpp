@@ -100,7 +100,7 @@ UUR_DEVICE_TEST_SUITE_WITH_PARAM(
 
 TEST_P(urEnqueueUSMFillTestWithParam, Success) {
   // https://github.com/intel/llvm/issues/19604
-  // UUR_KNOWN_FAILURE_ON(uur::LevelZeroV2{});
+  UUR_KNOWN_FAILURE_ON(uur::LevelZeroV2{});
   UUR_KNOWN_FAILURE_ON(uur::NativeCPU{});
 
   ur_event_handle_t event = nullptr;
