@@ -244,20 +244,21 @@ ur_result_t ur_queue_batched_t::queueFinishBatchAndPoolsUnlocked(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t
-ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
+// ur_result_t
+// ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
+ur_result_t batch_manager::batchFinish() {
   // auto regularCmdlist = (*batchLocked)->regularBatch.getZeCommandList();
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::queueFinishUnlocked");
 
-  UR_CALL(queueFinishBatchAndPoolsUnlocked(
-      batchLocked->immediateList.getZeCommandList(),
-      batchLocked->activeBatch.getZeCommandList()));
+  // UR_CALL(queueFinishBatchAndPoolsUnlocked(
+  //     immediateList.getZeCommandList(),
+  //     activeBatch.getZeCommandList()));
 
   {
     // TRACK_SCOPE_LATENCY(
     //     "ur_queue_batched_t::queueFinishUnlocked_releaseSubmittedKernels");
     TRACK_SCOPE_LATENCY("ur_queue_batched_t::releaseSubmittedKernels");
-    UR_CALL(batchLocked->immediateList.releaseSubmittedKernels());
+    UR_CALL(immediateList.releaseSubmittedKernels());
   }
 
   // return renewRegularUnlocked(batchLocked);
@@ -265,10 +266,19 @@ ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
     TRACK_SCOPE_LATENCY(
         "ur_queue_batched_t::queueFinishUnlocked_resetRegCmdlist");
     ZE2UR_CALL(zeCommandListReset,
-               (batchLocked->activeBatch.getZeCommandList()));
+               (activeBatch.getZeCommandList()));
   }
 
   return UR_RESULT_SUCCESS;
+}
+
+ur_result_t
+ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
+  UR_CALL(queueFinishBatchAndPoolsUnlocked(
+      batchLocked->getImmediateListHandle(),
+      batchLocked->getRegularListHandle()));
+
+  return batchLocked->batchFinish();
 }
 
 ur_result_t ur_queue_batched_t::queueFinish() {

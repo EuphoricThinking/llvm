@@ -66,6 +66,16 @@ public:
   ur_event_generation_t getCurrentGeneration() {
     return regularGenerationNumber;
   }
+
+  ur_result_t batchFinish();
+
+  ze_command_list_handle_t getImmediateListHandle() {
+    return immediateList.getZeCommandList();
+  }
+
+  ze_command_list_handle_t getRegularListHandle() {
+    return activeBatch.getZeCommandList();
+  }
 };
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {
