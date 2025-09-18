@@ -164,11 +164,11 @@ public:
 
     auto lockedBatch = currentCmdLists.lock();
 
-    UR_CALL(lockedBatch->activeBatch.appendEventsWait(
+    UR_CALL(lockedBatch->getActiveBatch().appendEventsWait(
         waitListView,
         /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->regularGenerationNumber)));
+                                      lockedBatch->getCurrentGeneration())));
 
     return queueFlushUnlocked(lockedBatch);
     // return UR_RESULT_ERROR_INVALID_VALUE;
@@ -258,12 +258,12 @@ public:
 
     // printf("memcpy batched\n");
     auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->activeBatch.appendMemBufferCopy(
+    return lockedBatch->getActiveBatch().appendMemBufferCopy(
         hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
         waitListView, /* numEventsInWaitList,
 phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->regularGenerationNumber));
+                                      lockedBatch->getCurrentGeneration()));
     // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
@@ -368,11 +368,11 @@ phEventWaitList, */
         wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
     auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->activeBatch.appendUSMFill(
+    return lockedBatch->getActiveBatch().appendUSMFill(
         pMem, patternSize, pPattern, size,
         waitListView, /* numEventsInWaitList, phEventWaitList, */
         createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->regularGenerationNumber));
+                                      lockedBatch->getCurrentGeneration()));
     // return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
