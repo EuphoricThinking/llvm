@@ -54,7 +54,18 @@ public:
     runBatches.reserve(default_num_batches);
   }
 
-  friend class ur_queue_batched_t;
+  ur_result_t renewRegularUnlocked(v2::raii::command_list_unique_handle && newRegularBatch);
+
+  bool isCurrentGeneration(ur_event_generation_t batch_generation);
+  ur_result_t runAndRenewBatch(v2::raii::command_list_unique_handle &&newRegularBatch);
+
+  ur_command_list_manager& getActiveBatch() {
+    return activeBatch;
+  }
+
+  ur_event_generation_t getCurrentGeneration() {
+    return regularGenerationNumber;
+  }
 };
 
 struct ur_queue_batched_t : ur_object, ur_queue_t_ {

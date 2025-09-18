@@ -30,6 +30,7 @@
 #include "ze_api.h"
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 
 namespace v2 {
 
@@ -108,17 +109,17 @@ ur_result_t ur_queue_batched_t::renewRegular() {
 }
 
 ur_result_t
-ur_queue_batched_t::renewRegularUnlocked(locked<batch_manager> &batchLocked) {
-  TRACK_SCOPE_LATENCY("ur_queue_batched_t::renewRegularUnlocked");
+batch_manager::renewRegularUnlocked(v2::raii::command_list_unique_handle &&newRegularBatch) {
+  TRACK_SCOPE_LATENCY("batch_manager::renewRegularUnlocked");
 
-  batchLocked->regularGenerationNumber++;
+  regularGenerationNumber++;
 
   // save the previous regular for execution
   // renew regular
-  batchLocked->runBatches.push_back(
-      batchLocked->activeBatch
+  runBatches.push_back(
+      activeBatch
           .releaseCommandList()); // std::move(batchLocked->regularBatch));
-  batchLocked->activeBatch.replaceCommandList(getNewRegularCmdList());
+  activeBatch.replaceCommandList(std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
 
   return UR_RESULT_SUCCESS;
 }
@@ -144,23 +145,49 @@ ur_result_t enqueueCurrentBatchUnlocked(ze_command_list_handle_t immediateList,
   return UR_RESULT_SUCCESS;
 }
 
+bool batch_manager::isCurrentGeneration(ur_event_generation_t batch_generation) {
+  return batch_generation == regularGenerationNumber;
+}
+
+ur_result_t batch_manager::runAndRenewBatch(v2::raii::command_list_unique_handle &&newRegularBatch) {
+//   if (batch_generation != regularGenerationNumber) {
+//     // the batch must have been already run
+//     return UR_RESULT_SUCCESS;
+//   }
+
+  // auto regularList = batchLocked->regularBatch.getZeCommandList();
+  UR_CALL(
+  
+      enqueueCurrentBatchUnlocked(immediateList.getZeCommandList(),
+                                  activeBatch.getZeCommandList()));
+
+  return renewRegularUnlocked(std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
+  // return renewRegularUnlocked(batchLocked);
+}
+
 ur_result_t
 ur_queue_batched_t::runBatchIfActive(ur_event_generation_t batch_generation) {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::runBatchIfActive");
 
   auto batchLocked = currentCmdLists.lock();
-
-  if (batch_generation != batchLocked->regularGenerationNumber) {
-    // the batch must have been already run
+  if (batchLocked->isCurrentGeneration(batch_generation)) {
+    return batchLocked->runAndRenewBatch(getNewRegularCmdList());
+  }
+  else {
     return UR_RESULT_SUCCESS;
   }
 
-  // auto regularList = batchLocked->regularBatch.getZeCommandList();
-  UR_CALL(
-      enqueueCurrentBatchUnlocked(batchLocked->immediateList.getZeCommandList(),
-                                  batchLocked->activeBatch.getZeCommandList()));
+  // if (batch_generation != batchLocked->regularGenerationNumber) {
+  //   // the batch must have been already run
+  //   return UR_RESULT_SUCCESS;
+  // }
 
-  return renewRegularUnlocked(batchLocked);
+  // // auto regularList = batchLocked->regularBatch.getZeCommandList();
+  // UR_CALL(
+  //     enqueueCurrentBatchUnlocked(batchLocked->immediateList.getZeCommandList(),
+  //                                 batchLocked->activeBatch.getZeCommandList()));
+
+  // return renewRegularUnlocked(batchLocked);
 }
 
 ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
@@ -176,14 +203,14 @@ ur_result_t ur_queue_batched_t::enqueueKernelLaunch(
 
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::enqueueKernelLaunch");
   auto currentRegular = currentCmdLists.lock();
-  UR_CALL(currentRegular->activeBatch.appendKernelLaunch(
+  UR_CALL(currentRegular->getActiveBatch().appendKernelLaunch(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
       numPropsInLaunchPropList, launchPropList,
       waitListView, /* numEventsInWaitList,
 phEventWaitList, */
       createEventIfRequestedRegular(
           phEvent,
-          currentRegular->regularGenerationNumber))); // nullptr));
+          currentRegular->getCurrentGeneration()))); // nullptr));
 
   return UR_RESULT_SUCCESS;
 }
