@@ -832,11 +832,11 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t
-ur_command_list_manager::appendMemUnmap(ur_mem_handle_t hMem, void *pMappedPtr,
-                                        wait_list_view &waitListView, /* uint32_t
+ur_result_t ur_command_list_manager::appendMemUnmap(
+    ur_mem_handle_t hMem, void *pMappedPtr,
+    wait_list_view &waitListView, /* uint32_t
 numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
-                                        ur_event_handle_t phEvent) {
+    ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemUnmap");
 
   auto hBuffer = hMem->getBuffer();
@@ -1071,8 +1071,9 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
     const ur_image_format_t *pSrcImageFormat,
     const ur_image_format_t *pDstImageFormat,
     ur_exp_image_copy_region_t *pCopyRegion,
-    ur_exp_image_copy_flags_t imageCopyFlags, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    ur_exp_image_copy_flags_t imageCopyFlags,
+    wait_list_view &waitListView, /* uint32_t
+numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_COPY);

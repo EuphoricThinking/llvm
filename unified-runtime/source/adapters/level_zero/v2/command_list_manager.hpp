@@ -238,17 +238,19 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
   bindlessImagesWaitExternalSemaphoreExp(ur_exp_external_semaphore_handle_t
                                              hSemaphore,
                                          bool hasWaitValue, uint64_t waitValue,
-                                         wait_list_view &waitListView, /* uint32_t
-                     numEventsInWaitList, const ur_event_handle_t
-                     *phEventWaitList, */ ur_event_handle_t phEvent);
+                                         wait_list_view &waitListView,
+                                         /* uint32_t
+numEventsInWaitList, const ur_event_handle_t
+*phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t
   bindlessImagesSignalExternalSemaphoreExp(ur_exp_external_semaphore_handle_t
                                                hSemaphore,
                                            bool hasSignalValue,
                                            uint64_t signalValue,
-                                           wait_list_view &waitListView, /* uint32_t
-                     numEventsInWaitList, const ur_event_handle_t
-                     *phEventWaitList, */ ur_event_handle_t phEvent);
+                                           wait_list_view &waitListView,
+                                           /* uint32_t
+numEventsInWaitList, const ur_event_handle_t
+*phEventWaitList, */ ur_event_handle_t phEvent);
   ur_result_t appendCooperativeKernelLaunchExp(
       ur_kernel_handle_t hKernel, uint32_t workDim,
       const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
@@ -301,15 +303,11 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
   void replaceCommandList(v2::raii::command_list_unique_handle &&cmdlist);
 
 private:
-  ur_result_t appendGenericCommandListsExp(uint32_t numCommandLists,
-                                           ze_command_list_handle_t
-                                               *phCommandLists,
-                                           ur_event_handle_t phEvent,
-                                           wait_list_view &waitListView, /* uint32_t
-                numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-              */ ur_command_t callerCommand,
-                                           ur_event_handle_t
-                                               additionalWaitEvent);
+  ur_result_t appendGenericCommandListsExp(
+      uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+      ur_event_handle_t phEvent, wait_list_view &waitListView, /* uint32_t
+      numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    */ ur_command_t callerCommand, ur_event_handle_t additionalWaitEvent);
 
   void recordSubmittedKernel(ur_kernel_handle_t hKernel);
 

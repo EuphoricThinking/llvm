@@ -131,9 +131,9 @@ public:
   ur_result_t
   enqueueEventsWaitWithBarrier(uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
-                               ur_event_handle_t *phEvent) override {
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                               ur_event_handle_t *phEvent) override; // {
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
@@ -142,7 +142,7 @@ public:
         wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
     auto lockedBatch = currentCmdLists.lock();
-     
+
     UR_CALL(lockedBatch->activeBatch.appendEventsWait(
         waitListView,
         /* numEventsInWaitList, phEventWaitList, */
@@ -161,10 +161,13 @@ public:
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
                                   ur_event_handle_t *phEvent) override {
-    // return enqueueEventsWaitWithBarrier(numEventsInWaitList, phEventWaitList,
-    //                                     phEvent);
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+    return enqueueEventsWaitWithBarrier(numEventsInWaitList, phEventWaitList,
+                                        phEvent);
+  } // {
+  // return enqueueEventsWaitWithBarrier(numEventsInWaitList, phEventWaitList,
+  //                                     phEvent);
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemBufferRead(ur_mem_handle_t hBuffer, bool blockingRead,
                                    size_t offset, size_t size, void *pDst,
@@ -250,11 +253,11 @@ phEventWaitList, */
       size_t dstRowPitch, size_t dstSlicePitch, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
       ur_event_handle_t *phEvent) override; //{
-    // return commandListManagerImmediate.lock()->appendMemBufferCopyRect(
-    //     hBufferSrc, hBufferDst, srcOrigin, dstOrigin, region, srcRowPitch,
-    //     srcSlicePitch, dstRowPitch, dstSlicePitch, numEventsInWaitList,
-    //     phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendMemBufferCopyRect(
+  //     hBufferSrc, hBufferDst, srcOrigin, dstOrigin, region, srcRowPitch,
+  //     srcSlicePitch, dstRowPitch, dstSlicePitch, numEventsInWaitList,
+  //     phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
@@ -363,10 +366,10 @@ phEventWaitList, */
                                size_t height, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
                                ur_event_handle_t *phEvent) override; //{
-    // return commandListManagerImmediate.lock()->appendUSMFill2D(
-    //     pMem, pitch, patternSize, pPattern, width, height,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendUSMFill2D(
+  //     pMem, pitch, patternSize, pPattern, width, height,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
@@ -376,10 +379,10 @@ phEventWaitList, */
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
                                  ur_event_handle_t *phEvent) override; // {
-    // return commandListManagerImmediate.lock()->appendUSMMemcpy2D(
-    //     blocking, pDst, dstPitch, pSrc, srcPitch, width, height,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendUSMMemcpy2D(
+  //     blocking, pDst, dstPitch, pSrc, srcPitch, width, height,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
@@ -388,9 +391,9 @@ phEventWaitList, */
                                  uint32_t numEventsInWaitList,
                                  const ur_event_handle_t *phEventWaitList,
                                  ur_event_handle_t *phEvent) override; // {
-    // return commandListManagerImmediate.lock()->appendUSMPrefetch(
-    //     pMem, size, flags, numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendUSMPrefetch(
+  //     pMem, size, flags, numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
