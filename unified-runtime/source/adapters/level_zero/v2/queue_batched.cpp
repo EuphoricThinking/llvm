@@ -102,11 +102,11 @@ ur_event_handle_t ur_queue_batched_t::createEventAndRetainRegular(
   return hEvent;
 }
 
-ur_result_t ur_queue_batched_t::renewRegular() {
-  auto lockedBatches = currentCmdLists.lock();
+// ur_result_t ur_queue_batched_t::renewRegular() {
+//   auto lockedBatches = currentCmdLists.lock();
 
-  return renewRegularUnlocked(lockedBatches);
-}
+//   return renewRegularUnlocked(lockedBatches);
+// }
 
 ur_result_t
 batch_manager::renewRegularUnlocked(v2::raii::command_list_unique_handle &&newRegularBatch) {
@@ -735,7 +735,8 @@ ur_queue_batched_t::queueFlushUnlocked(locked<batch_manager> &batchLocked) {
       enqueueCurrentBatchUnlocked(batchLocked->getImmediateListHandle(),
                                   batchLocked->getRegularListHandle()));
 
-  return renewRegularUnlocked(batchLocked);
+  return batchLocked->renewRegularUnlocked(std::forward<v2::raii::command_list_unique_handle>(getNewRegularCmdList()));
+  // return renewRegularUnlocked(batchLocked);
 }
 
 ur_result_t ur_queue_batched_t::queueFlush() {

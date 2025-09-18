@@ -99,7 +99,7 @@ private:
   void runOldBatchRenewBatch();
 
   ur_result_t renewRegular();
-  ur_result_t renewRegularUnlocked(locked<batch_manager> &batchLocked);
+  // ur_result_t renewRegularUnlocked(locked<batch_manager> &batchLocked);
   ur_event_handle_t
   createEventIfRequestedRegular(ur_event_handle_t *phEvent,
                                 ur_event_generation_t generation_number);
