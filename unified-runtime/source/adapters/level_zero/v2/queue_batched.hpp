@@ -54,14 +54,14 @@ public:
     runBatches.reserve(default_num_batches);
   }
 
-  ur_result_t renewRegularUnlocked(v2::raii::command_list_unique_handle && newRegularBatch);
+  ur_result_t
+  renewRegularUnlocked(v2::raii::command_list_unique_handle &&newRegularBatch);
 
   bool isCurrentGeneration(ur_event_generation_t batch_generation);
-  ur_result_t runAndRenewBatch(v2::raii::command_list_unique_handle &&newRegularBatch);
+  ur_result_t
+  runAndRenewBatch(v2::raii::command_list_unique_handle &&newRegularBatch);
 
-  ur_command_list_manager& getActiveBatch() {
-    return activeBatch;
-  }
+  ur_command_list_manager &getActiveBatch() { return activeBatch; }
 
   ur_event_generation_t getCurrentGeneration() {
     return regularGenerationNumber;
@@ -125,7 +125,8 @@ public:
                      std::optional<int32_t> index, event_flags_t eventFlags,
                      ur_queue_flags_t flags);
 
-  ur_result_t onEventWaitListUse(ur_event_generation_t batch_generation) override;
+  ur_result_t
+  onEventWaitListUse(ur_event_generation_t batch_generation) override;
 
   ~ur_queue_batched_t();
 
@@ -158,24 +159,25 @@ public:
 
   ur_result_t enqueueEventsWait(uint32_t numEventsInWaitList,
                                 const ur_event_handle_t *phEventWaitList,
-                                ur_event_handle_t *phEvent) override {
-    wait_list_view waitListView =
-        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+                                ur_event_handle_t *phEvent) override; // {
+  //   wait_list_view waitListView =
+  //       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
-    auto lockedBatch = currentCmdLists.lock();
+  //   auto lockedBatch = currentCmdLists.lock();
 
-    UR_CALL(lockedBatch->getActiveBatch().appendEventsWait(
-        waitListView,
-        /* numEventsInWaitList, phEventWaitList, */
-        createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->getCurrentGeneration())));
+  //   UR_CALL(lockedBatch->getActiveBatch().appendEventsWait(
+  //       waitListView,
+  //       /* numEventsInWaitList, phEventWaitList, */
+  //       createEventIfRequestedRegular(phEvent,
+  //                                     lockedBatch->getCurrentGeneration())));
 
-    return queueFlushUnlocked(lockedBatch);
-    // return UR_RESULT_ERROR_INVALID_VALUE;
-    // return commandListManagerImmediate.lock()->appendEventsWait(
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-  }
+  //   return queueFlushUnlocked(lockedBatch);
+  //   // return UR_RESULT_ERROR_INVALID_VALUE;
+  //   // return commandListManagerImmediate.lock()->appendEventsWait(
+  //   //     numEventsInWaitList, phEventWaitList,
+  //   //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //   -1));
+  // }
 
   ur_result_t
   enqueueEventsWaitWithBarrierExt(const ur_exp_enqueue_ext_properties_t *,
@@ -252,20 +254,20 @@ public:
                                    size_t dstOffset, size_t size,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) override {
-    wait_list_view waitListView =
-        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+                                   ur_event_handle_t *phEvent) override; // {
+  //     wait_list_view waitListView =
+  //         wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
-    // printf("memcpy batched\n");
-    auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->getActiveBatch().appendMemBufferCopy(
-        hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
-        waitListView, /* numEventsInWaitList,
-phEventWaitList, */
-        createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->getCurrentGeneration()));
-    // return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //     // printf("memcpy batched\n");
+  //     auto lockedBatch = currentCmdLists.lock();
+  //     return lockedBatch->getActiveBatch().appendMemBufferCopy(
+  //         hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
+  //         waitListView, /* numEventsInWaitList,
+  // phEventWaitList, */
+  //         createEventIfRequestedRegular(phEvent,
+  //                                       lockedBatch->getCurrentGeneration()));
+  //     // return UR_RESULT_ERROR_INVALID_VALUE;
+  //   }
 
   ur_result_t enqueueMemBufferCopyRect(
       ur_mem_handle_t hBufferSrc, ur_mem_handle_t hBufferDst,
@@ -363,18 +365,18 @@ phEventWaitList, */
                              const void *pPattern, size_t size,
                              uint32_t numEventsInWaitList,
                              const ur_event_handle_t *phEventWaitList,
-                             ur_event_handle_t *phEvent) override {
-    wait_list_view waitListView =
-        wait_list_view(phEventWaitList, numEventsInWaitList, this);
+                             ur_event_handle_t *phEvent) override; // {
+  //   wait_list_view waitListView =
+  //       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
-    auto lockedBatch = currentCmdLists.lock();
-    return lockedBatch->getActiveBatch().appendUSMFill(
-        pMem, patternSize, pPattern, size,
-        waitListView, /* numEventsInWaitList, phEventWaitList, */
-        createEventIfRequestedRegular(phEvent,
-                                      lockedBatch->getCurrentGeneration()));
-    // return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   auto lockedBatch = currentCmdLists.lock();
+  //   return lockedBatch->getActiveBatch().appendUSMFill(
+  //       pMem, patternSize, pPattern, size,
+  //       waitListView, /* numEventsInWaitList, phEventWaitList, */
+  //       createEventIfRequestedRegular(phEvent,
+  //                                     lockedBatch->getCurrentGeneration()));
+  //   // return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMMemcpy(bool blocking, void *pDst, const void *pSrc,
                                size_t size, uint32_t numEventsInWaitList,

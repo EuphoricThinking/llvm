@@ -108,8 +108,8 @@ ur_event_handle_t ur_queue_batched_t::createEventAndRetainRegular(
 //   return renewRegularUnlocked(lockedBatches);
 // }
 
-ur_result_t
-batch_manager::renewRegularUnlocked(v2::raii::command_list_unique_handle &&newRegularBatch) {
+ur_result_t batch_manager::renewRegularUnlocked(
+    v2::raii::command_list_unique_handle &&newRegularBatch) {
   TRACK_SCOPE_LATENCY("batch_manager::renewRegularUnlocked");
 
   regularGenerationNumber++;
@@ -119,7 +119,8 @@ batch_manager::renewRegularUnlocked(v2::raii::command_list_unique_handle &&newRe
   runBatches.push_back(
       activeBatch
           .releaseCommandList()); // std::move(batchLocked->regularBatch));
-  activeBatch.replaceCommandList(std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
+  activeBatch.replaceCommandList(
+      std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
 
   return UR_RESULT_SUCCESS;
 }
@@ -145,23 +146,26 @@ ur_result_t enqueueCurrentBatchUnlocked(ze_command_list_handle_t immediateList,
   return UR_RESULT_SUCCESS;
 }
 
-bool batch_manager::isCurrentGeneration(ur_event_generation_t batch_generation) {
+bool batch_manager::isCurrentGeneration(
+    ur_event_generation_t batch_generation) {
   return batch_generation == regularGenerationNumber;
 }
 
-ur_result_t batch_manager::runAndRenewBatch(v2::raii::command_list_unique_handle &&newRegularBatch) {
-//   if (batch_generation != regularGenerationNumber) {
-//     // the batch must have been already run
-//     return UR_RESULT_SUCCESS;
-//   }
+ur_result_t batch_manager::runAndRenewBatch(
+    v2::raii::command_list_unique_handle &&newRegularBatch) {
+  //   if (batch_generation != regularGenerationNumber) {
+  //     // the batch must have been already run
+  //     return UR_RESULT_SUCCESS;
+  //   }
 
   // auto regularList = batchLocked->regularBatch.getZeCommandList();
   UR_CALL(
-  
+
       enqueueCurrentBatchUnlocked(immediateList.getZeCommandList(),
                                   activeBatch.getZeCommandList()));
 
-  return renewRegularUnlocked(std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
+  return renewRegularUnlocked(
+      std::forward<v2::raii::command_list_unique_handle>(newRegularBatch));
   // return renewRegularUnlocked(batchLocked);
 }
 
@@ -172,8 +176,7 @@ ur_queue_batched_t::onEventWaitListUse(ur_event_generation_t batch_generation) {
   auto batchLocked = currentCmdLists.lock();
   if (batchLocked->isCurrentGeneration(batch_generation)) {
     return batchLocked->runAndRenewBatch(getNewRegularCmdList());
-  }
-  else {
+  } else {
     return UR_RESULT_SUCCESS;
   }
 
@@ -265,8 +268,7 @@ ur_result_t batch_manager::batchFinish() {
   {
     TRACK_SCOPE_LATENCY(
         "ur_queue_batched_t::queueFinishUnlocked_resetRegCmdlist");
-    ZE2UR_CALL(zeCommandListReset,
-               (activeBatch.getZeCommandList()));
+    ZE2UR_CALL(zeCommandListReset, (activeBatch.getZeCommandList()));
   }
 
   return UR_RESULT_SUCCESS;
@@ -274,9 +276,9 @@ ur_result_t batch_manager::batchFinish() {
 
 ur_result_t
 ur_queue_batched_t::queueFinishUnlocked(locked<batch_manager> &batchLocked) {
-  UR_CALL(queueFinishBatchAndPoolsUnlocked(
-      batchLocked->getImmediateListHandle(),
-      batchLocked->getRegularListHandle()));
+  UR_CALL(
+      queueFinishBatchAndPoolsUnlocked(batchLocked->getImmediateListHandle(),
+                                       batchLocked->getRegularListHandle()));
 
   return batchLocked->batchFinish();
 }
@@ -677,6 +679,55 @@ ur_result_t ur_queue_batched_t::enqueueEventsWaitWithBarrier(
   return queueFlushUnlocked(lockedBatch);
 }
 
+ur_result_t
+ur_queue_batched_t::enqueueEventsWait(uint32_t numEventsInWaitList,
+                                      const ur_event_handle_t *phEventWaitList,
+                                      ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->getActiveBatch().appendEventsWait(
+      waitListView,
+      /* numEventsInWaitList, phEventWaitList, */
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())));
+
+  return queueFlushUnlocked(lockedBatch);
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemBufferCopy(
+    ur_mem_handle_t hBufferSrc, ur_mem_handle_t hBufferDst, size_t srcOffset,
+    size_t dstOffset, size_t size, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  // printf("memcpy batched\n");
+  auto lockedBatch = currentCmdLists.lock();
+  return lockedBatch->getActiveBatch().appendMemBufferCopy(
+      hBufferSrc, hBufferDst, srcOffset, dstOffset, size,
+      waitListView, /* numEventsInWaitList,
+phEventWaitList, */
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::enqueueUSMFill(
+    void *pMem, size_t patternSize, const void *pPattern, size_t size,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+  return lockedBatch->getActiveBatch().appendUSMFill(
+      pMem, patternSize, pPattern, size,
+      waitListView, /* numEventsInWaitList, phEventWaitList, */
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
 ////////////////////////////
 
 // from in_order.cpp
@@ -731,11 +782,12 @@ ur_queue_batched_t::queueGetNativeHandle(ur_queue_native_desc_t * /*pDesc*/,
 
 ur_result_t
 ur_queue_batched_t::queueFlushUnlocked(locked<batch_manager> &batchLocked) {
-  UR_CALL(
-      enqueueCurrentBatchUnlocked(batchLocked->getImmediateListHandle(),
-                                  batchLocked->getRegularListHandle()));
+  UR_CALL(enqueueCurrentBatchUnlocked(batchLocked->getImmediateListHandle(),
+                                      batchLocked->getRegularListHandle()));
 
-  return batchLocked->renewRegularUnlocked(std::forward<v2::raii::command_list_unique_handle>(getNewRegularCmdList()));
+  return batchLocked->renewRegularUnlocked(
+      std::forward<v2::raii::command_list_unique_handle>(
+          getNewRegularCmdList()));
   // return renewRegularUnlocked(batchLocked);
 }
 
