@@ -901,6 +901,82 @@ ur_result_t ur_queue_batched_t::bindlessImagesImageCopyExp(
       createEventIfRequestedRegular(phEvent,
                                     lockedBatch->getCurrentGeneration()));
 }
+
+ur_result_t ur_queue_batched_t::bindlessImagesWaitExternalSemaphoreExp(
+    ur_exp_external_semaphore_handle_t hSemaphore, bool hasWaitValue,
+    uint64_t waitValue, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().bindlessImagesWaitExternalSemaphoreExp(
+      hSemaphore, hasWaitValue, waitValue, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::bindlessImagesSignalExternalSemaphoreExp(
+    ur_exp_external_semaphore_handle_t hSemaphore, bool hasSignalValue,
+    uint64_t signalValue, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().bindlessImagesSignalExternalSemaphoreExp(
+      hSemaphore, hasSignalValue, signalValue, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::enqueueTimestampRecordingExp(
+    bool blocking, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendTimestampRecordingExp(
+      blocking, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::enqueueCommandBufferExp(
+    ur_exp_command_buffer_handle_t hCommandBuffer, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendCommandBufferExp(
+      hCommandBuffer, waitListView,
+      createEventAndRetainRegular(phEvent,
+                                  lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::enqueueNativeCommandExp(
+    ur_exp_enqueue_native_command_function_t pfnNativeEnqueue, void *data,
+    uint32_t numMemsInMemList, const ur_mem_handle_t *phMemList,
+    const ur_exp_enqueue_native_command_properties_t *pProperties,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendNativeCommandExp(
+      pfnNativeEnqueue, data, numMemsInMemList, phMemList, pProperties,
+      waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
 //////////////
 // from in_order.cpp
 

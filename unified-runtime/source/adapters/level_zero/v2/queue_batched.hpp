@@ -538,63 +538,63 @@ public:
       ur_exp_external_semaphore_handle_t hSemaphore, bool hasWaitValue,
       uint64_t waitValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()
-    //     ->bindlessImagesWaitExternalSemaphoreExp(
-    //         hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
-    //         phEventWaitList,
-    //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
-    //                                -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()
+  //     ->bindlessImagesWaitExternalSemaphoreExp(
+  //         hSemaphore, hasWaitValue, waitValue, numEventsInWaitList,
+  //         phEventWaitList,
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //                                -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t bindlessImagesSignalExternalSemaphoreExp(
       ur_exp_external_semaphore_handle_t hSemaphore, bool hasSignalValue,
       uint64_t signalValue, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()
-    //     ->bindlessImagesSignalExternalSemaphoreExp(
-    //         hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
-    //         phEventWaitList,
-    //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
-    //                                -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()
+  //     ->bindlessImagesSignalExternalSemaphoreExp(
+  //         hSemaphore, hasSignalValue, signalValue, numEventsInWaitList,
+  //         phEventWaitList,
+  //         createEventIfRequested(eventPoolImmediate.get(), phEvent, this,
+  //                                -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t
   enqueueTimestampRecordingExp(bool blocking, uint32_t numEventsInWaitList,
                                const ur_event_handle_t *phEventWaitList,
-                               ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendTimestampRecordingExp(
-    //     blocking, numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                               ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendTimestampRecordingExp(
+  //     blocking, numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t
   enqueueCommandBufferExp(ur_exp_command_buffer_handle_t hCommandBuffer,
                           uint32_t numEventsInWaitList,
                           const ur_event_handle_t *phEventWaitList,
-                          ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendCommandBufferExp(
-    //     hCommandBuffer, numEventsInWaitList, phEventWaitList,
-    //     createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                          ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendCommandBufferExp(
+  //     hCommandBuffer, numEventsInWaitList, phEventWaitList,
+  //     createEventAndRetain(eventPoolImmediate.get(), phEvent, this));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueNativeCommandExp(
       ur_exp_enqueue_native_command_function_t pfnNativeEnqueue, void *data,
       uint32_t numMemsInMemList, const ur_mem_handle_t *phMemList,
       const ur_exp_enqueue_native_command_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendNativeCommandExp(
-    //     pfnNativeEnqueue, data, numMemsInMemList, phMemList, pProperties,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendNativeCommandExp(
+  //     pfnNativeEnqueue, data, numMemsInMemList, phMemList, pProperties,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur::RefCount RefCount;
 };
