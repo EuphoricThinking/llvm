@@ -417,7 +417,7 @@ ur_result_t ur_queue_batched_t::enqueueDeviceGlobalVariableRead(
   auto lockedBatch = currentCmdLists.lock();
 
   UR_CALL(lockedBatch->getActiveBatch().appendDeviceGlobalVariableRead(
-      hProgram, name, blockingRead, count, offset, pDst,
+      hProgram, name, false, count, offset, pDst,
       waitListView, /* numEventsInWaitList,
 phEventWaitList, */
       createEventIfRequestedRegular(phEvent,
