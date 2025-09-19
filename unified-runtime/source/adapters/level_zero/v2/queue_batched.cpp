@@ -729,7 +729,110 @@ ur_result_t ur_queue_batched_t::enqueueUSMFill(
                                     lockedBatch->getCurrentGeneration()));
 }
 ////////////////////////////
+// for tests in CI
+ur_result_t ur_queue_batched_t::enqueueMemImageRead(
+    ur_mem_handle_t hImage, bool blockingRead, ur_rect_offset_t origin,
+    ur_rect_region_t region, size_t rowPitch, size_t slicePitch, void *pDst,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
+  auto lockedBatch = currentCmdLists.lock();
+  UR_CALL(lockedBatch->getActiveBatch().appendMemImageRead(
+      hImage, false, origin, region, rowPitch, slicePitch, pDst, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())));
+
+  if (blockingRead) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemImageWrite(
+    ur_mem_handle_t hImage, bool blockingWrite, ur_rect_offset_t origin,
+    ur_rect_region_t region, size_t rowPitch, size_t slicePitch, void *pSrc,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+  UR_CALL(lockedBatch->getActiveBatch().appendMemImageWrite(
+      hImage, false, origin, region, rowPitch, slicePitch, pSrc, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())));
+
+  if (blockingWrite) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueMemImageCopy(
+    ur_mem_handle_t hImageSrc, ur_mem_handle_t hImageDst,
+    ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
+    ur_rect_region_t region, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendMemImageCopy(
+      hImageSrc, hImageDst, srcOrigin, dstOrigin, region, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
+
+ur_result_t ur_queue_batched_t::enqueueReadHostPipe(
+    ur_program_handle_t hProgram, const char *pipe_symbol, bool blocking,
+    void *pDst, size_t size, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->getActiveBatch().appendReadHostPipe(
+      hProgram, pipe_symbol, false, pDst, size, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())));
+
+  if (blocking) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t ur_queue_batched_t::enqueueWriteHostPipe(ur_program_handle_t hProgram,
+                                   const char *pipe_symbol, bool blocking,
+                                   void *pSrc, size_t size,
+                                   uint32_t numEventsInWaitList,
+                                   const ur_event_handle_t *phEventWaitList,
+                                   ur_event_handle_t *phEvent) {
+wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  UR_CALL(lockedBatch->getActiveBatch().appendWriteHostPipe(
+        hProgram, pipe_symbol, false, pSrc, size,
+        waitListView, createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())) );
+
+                                    if (blocking) {
+                                         UR_CALL(queueFinishUnlocked(lockedBatch));
+ 
+                                    }
+
+                                    return UR_RESULT_SUCCESS;
+                                  }
+
+//////////////
 // from in_order.cpp
 
 ur_result_t ur_queue_batched_t::queueGetInfo(ur_queue_info_t propName,

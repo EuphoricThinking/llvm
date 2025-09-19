@@ -302,13 +302,13 @@ public:
                                   size_t slicePitch, void *pDst,
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
-                                  ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendMemImageRead(
-    //     hImage, blockingRead, origin, region, rowPitch, slicePitch, pDst,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                                  ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendMemImageRead; (
+  //     hImage, blockingRead, origin, region, rowPitch, slicePitch, pDst,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemImageWrite(ur_mem_handle_t hImage, bool blockingWrite,
                                    ur_rect_offset_t origin,
@@ -316,26 +316,26 @@ public:
                                    size_t slicePitch, void *pSrc,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendMemImageWrite(
-    //     hImage, blockingWrite, origin, region, rowPitch, slicePitch, pSrc,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                                   ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendMemImageWrite(
+  //     hImage, blockingWrite, origin, region, rowPitch, slicePitch, pSrc,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t
   enqueueMemImageCopy(ur_mem_handle_t hImageSrc, ur_mem_handle_t hImageDst,
                       ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
                       ur_rect_region_t region, uint32_t numEventsInWaitList,
                       const ur_event_handle_t *phEventWaitList,
-                      ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendMemImageCopy(
-    //     hImageSrc, hImageDst, srcOrigin, dstOrigin, region,
-    //     numEventsInWaitList, phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                      ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendMemImageCopy(
+  //     hImageSrc, hImageDst, srcOrigin, dstOrigin, region,
+  //     numEventsInWaitList, phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueMemBufferMap(ur_mem_handle_t hBuffer, bool blockingMap,
                                   ur_map_flags_t mapFlags, size_t offset,
@@ -446,26 +446,26 @@ public:
                                   void *pDst, size_t size,
                                   uint32_t numEventsInWaitList,
                                   const ur_event_handle_t *phEventWaitList,
-                                  ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendReadHostPipe(
-    //     hProgram, pipe_symbol, blocking, pDst, size, numEventsInWaitList,
-    //     phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                                  ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendReadHostPipe(
+  //     hProgram, pipe_symbol, blocking, pDst, size, numEventsInWaitList,
+  //     phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueWriteHostPipe(ur_program_handle_t hProgram,
                                    const char *pipe_symbol, bool blocking,
                                    void *pSrc, size_t size,
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) override {
+                                   ur_event_handle_t *phEvent) override; // {
     // return commandListManagerImmediate.lock()->appendWriteHostPipe(
     //     hProgram, pipe_symbol, blocking, pSrc, size, numEventsInWaitList,
     //     phEventWaitList,
     //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMDeviceAllocExp(
       ur_usm_pool_handle_t pPool, const size_t size,
