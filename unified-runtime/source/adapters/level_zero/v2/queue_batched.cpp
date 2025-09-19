@@ -37,7 +37,7 @@ namespace v2 {
 ur_queue_batched_t::ur_queue_batched_t(
     ur_context_handle_t hContext, ur_device_handle_t hDevice, uint32_t ordinal,
     ze_command_queue_priority_t priority, std::optional<int32_t> index,
-    event_flags_t eventFlags, ur_queue_flags_t flags)
+    [[maybe_unused]] event_flags_t eventFlags, ur_queue_flags_t flags)
     : regularCmdListDesc(v2::command_list_desc_t{
           true /* isInOrder*/, ordinal /* Ordinal*/,
           true /* copyOffloadEnable*/, false /*isMutable*/}),
@@ -403,7 +403,7 @@ phEventWaitList, */
                                     lockedBatch->getCurrentGeneration())));
 
   if (blockingWrite) {
-    UR_CALL_THROWS(queueFinishUnlocked(lockedBatch));
+    UR_CALL(queueFinishUnlocked(lockedBatch));
   }
   // return UR_RESULT_ERROR_INVALID_VALUE;
   return UR_RESULT_SUCCESS;
@@ -932,18 +932,34 @@ ur_result_t ur_queue_batched_t::bindlessImagesSignalExternalSemaphoreExp(
                                     lockedBatch->getCurrentGeneration()));
 }
 
+/*
+In case of queues with batched submissions, which use regular command lists (similarly to command buffers), the start timestamp would be recorded as the operation is submitted (event.recordStartTimestamp() in appendTimestampRecordingExp does not use the queue but directly the device), but the end timestamp would wait for the submission of the given regular command list. The difference between the start and end timestamps would reflect the delay in the batch submission, the difference between end timestamps would reflect the actual time of execution.
+
+TODO
+The version of timestampRecording for batched queues should be adjusted in  order to reflect the idea behind the original function
+*/
+
 ur_result_t ur_queue_batched_t::enqueueTimestampRecordingExp(
     bool blocking, uint32_t numEventsInWaitList,
     const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+
+      // // tests deadlock/hang with the default implementation
+      // return UR_RESULT_ERROR_INVALID_VALUE;
   wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatch = currentCmdLists.lock();
 
-  return lockedBatch->getActiveBatch().appendTimestampRecordingExp(
+  UR_CALL(lockedBatch->getActiveBatch().appendTimestampRecordingExp(
       blocking, waitListView,
       createEventIfRequestedRegular(phEvent,
-                                    lockedBatch->getCurrentGeneration()));
+                                    lockedBatch->getCurrentGeneration())));
+
+  if (blocking) {
+        UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
+
+  return UR_RESULT_SUCCESS;
 }
 
 ur_result_t ur_queue_batched_t::enqueueCommandBufferExp(
