@@ -162,6 +162,8 @@ void ur_event_handle_t_::reset() {
   if (!(flags & v2::EVENT_FLAGS_COUNTER)) {
     zeEventHostReset(getZeEvent());
   }
+
+  batchGeneration = unbatchedQueue;
 }
 
 ze_event_handle_t ur_event_handle_t_::getZeEvent() const {
