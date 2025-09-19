@@ -125,7 +125,7 @@ public:
                      std::optional<int32_t> index, event_flags_t eventFlags,
                      ur_queue_flags_t flags);
 
-  ur_result_t runBatchIfActive(ur_event_generation_t batch_generation) override;
+  ur_result_t onEventWaitListUse(ur_event_generation_t batch_generation) override;
 
   ~ur_queue_batched_t();
 

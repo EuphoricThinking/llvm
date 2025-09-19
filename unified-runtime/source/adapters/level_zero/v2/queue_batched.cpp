@@ -166,7 +166,7 @@ ur_result_t batch_manager::runAndRenewBatch(v2::raii::command_list_unique_handle
 }
 
 ur_result_t
-ur_queue_batched_t::runBatchIfActive(ur_event_generation_t batch_generation) {
+ur_queue_batched_t::onEventWaitListUse(ur_event_generation_t batch_generation) {
   TRACK_SCOPE_LATENCY("ur_queue_batched_t::runBatchIfActive");
 
   auto batchLocked = currentCmdLists.lock();

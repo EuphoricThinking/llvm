@@ -134,10 +134,10 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
   this->commandType = commandType;
 }
 
-void ur_event_handle_t_::runBatch() {
+void ur_event_handle_t_::onWaitListUse() {
   // printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
   if (batchGeneration) {
-    hQueue->runBatchIfActive(batchGeneration.value());
+    hQueue->onEventWaitListUse(batchGeneration.value());
   }
 }
 
@@ -254,7 +254,7 @@ ur_result_t urEventRelease(ur_event_handle_t hEvent) try {
 ur_result_t urEventWait(uint32_t numEvents,
                         const ur_event_handle_t *phEventWaitList) try {
   for (uint32_t i = 0; i < numEvents; ++i) {
-    phEventWaitList[i]->runBatch();
+    phEventWaitList[i]->onWaitListUse();
     ZE2UR_CALL(zeEventHostSynchronize,
                (phEventWaitList[i]->getZeEvent(), UINT64_MAX));
   }

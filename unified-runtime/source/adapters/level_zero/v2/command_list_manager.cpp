@@ -33,7 +33,7 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
 
     waitList.resize(max_size);
     for (uint32_t i = 0; i < numWaitEvents; i++) {
-      phWaitEvents[i]->runBatch();
+      phWaitEvents[i]->onWaitListUse();
       waitList[i] = phWaitEvents[i]->getZeEvent();
     }
 
@@ -56,7 +56,7 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
     waitList.resize(max_size);
     for (uint32_t i = 0; i < numWaitEvents; i++) {
       if (currentBatchedQueue != phWaitEvents[i]->getQueue()) {
-        phWaitEvents[i]->runBatch();
+        phWaitEvents[i]->onWaitListUse();
       }
       waitList[i] = phWaitEvents[i]->getZeEvent();
     }

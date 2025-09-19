@@ -73,7 +73,7 @@ public:
   void setQueue(ur_queue_t_ *hQueue);
   void setBatch(ur_event_generation_t batch_generation);
   void setCommandType(ur_command_t commandType);
-  void runBatch();
+  void onWaitListUse();
 
   void reset();
   ze_event_handle_t getZeEvent() const;
