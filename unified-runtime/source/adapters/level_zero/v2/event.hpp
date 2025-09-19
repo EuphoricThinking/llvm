@@ -21,7 +21,6 @@
 #include "event_provider.hpp"
 
 using ur_event_generation_t = int64_t;
-// extern ur_event_generation_t unbatchedQueue;
 
 namespace v2 {
 class event_pool;
@@ -136,8 +135,6 @@ protected:
   // queue and commandType that this event is associated with, set by enqueue
   // commands
   ur_queue_t_ *hQueue = nullptr;
-  // default for non-batched queues
-  // ur_event_generation_t batchGeneration = unbatchedQueue; //-1;
   std::optional<ur_event_generation_t> batchGeneration;
   ur_command_t commandType = UR_COMMAND_FORCE_UINT32;
   ur_device_handle_t hDevice = nullptr;

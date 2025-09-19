@@ -135,7 +135,6 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
 }
 
 void ur_event_handle_t_::onWaitListUse() {
-  // printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
   if (batchGeneration) {
     hQueue->onEventWaitListUse(batchGeneration.value());
   }
@@ -164,7 +163,7 @@ void ur_event_handle_t_::reset() {
     zeEventHostReset(getZeEvent());
   }
 
-  batchGeneration = std::nullopt; // = unbatchedQueue;
+  batchGeneration = std::nullopt;
 }
 
 ze_event_handle_t ur_event_handle_t_::getZeEvent() const {

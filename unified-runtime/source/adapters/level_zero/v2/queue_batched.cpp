@@ -962,7 +962,6 @@ ur_queue_batched_t::queueFlushUnlocked(locked<batch_manager> &batchLocked) {
   return batchLocked->renewRegularUnlocked(
       std::forward<v2::raii::command_list_unique_handle>(
           getNewRegularCmdList()));
-  // return renewRegularUnlocked(batchLocked);
 }
 
 ur_result_t ur_queue_batched_t::queueFlush() {

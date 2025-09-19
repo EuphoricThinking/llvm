@@ -26,7 +26,6 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
     handles = nullptr;
     num = 0;
     max_size = 1;
-    // waitList.resize(num);
   } else {
     num = numWaitEvents;
     max_size = num + 1;
@@ -48,7 +47,6 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
     handles = nullptr;
     num = 0;
     max_size = 1;
-    // waitList.resize(num);
   } else {
     num = numWaitEvents;
     max_size = num + 1;
@@ -63,25 +61,10 @@ wait_list_view::wait_list_view(const ur_event_handle_t *phWaitEvents,
 
     handles = waitList.data();
   }
-  // num = numWaitEvents;
-  // max_size = num + 1;
-
-  // waitList.resize(max_size);
-  // for (uint32_t i = 0; i < numWaitEvents; i++) {
-  //   if (currentBatchedQueue != phWaitEvents[i]->getQueue()) {
-  //     phWaitEvents[i]->runBatch();
-  //   }
-
-  //   waitList[i] = phWaitEvents[i]->getZeEvent();
-  // }
-
-  // handles = waitList.data();
 }
 
 void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
   if (additionalEvent) {
-    // assert(num != max_size);
-    // handles[num] = additionalEvent->getZeEvent();
     if (handles) {
       assert(num != max_size);
       handles[num] = additionalEvent->getZeEvent();
@@ -92,16 +75,6 @@ void wait_list_view::addAdditionalEvent(ur_event_handle_t additionalEvent) {
       num++;
       handles = waitList.data();
     }
-
-    // printf("empalcing size %ld ptr %p capac %ld\n", waitList.size(),
-    // (void*)waitList.data(), waitList.capacity());
-    // waitList.emplace_back(additionalEvent->getZeEvent());
-    // handles = waitList.data();
-
-    //  printf("empalcing2 size %ld ptr %p capac %ld\n", waitList.size(),
-    //  (void*)waitList.data(), waitList.capacity());
-
-    // num++;
   }
 }
 
@@ -123,12 +96,10 @@ void ur_command_list_manager::replaceCommandList(
 
 ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
     ur_mem_buffer_t *dst, size_t offset, size_t patternSize,
-    const void *pPattern, size_t size, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList */
+    const void *pPattern, size_t size, wait_list_view &waitListView,
     ur_event_handle_t phEvent, ur_command_t commandType) {
 
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pDst = ur_cast<char *>(dst->getDevicePtr(
       hDevice.get(), ur_mem_buffer_t::device_access_mode_t::read_only, offset,
@@ -161,11 +132,9 @@ ur_result_t ur_command_list_manager::appendGenericFillUnlocked(
 
 ur_result_t ur_command_list_manager::appendGenericCopyUnlocked(
     ur_mem_buffer_t *src, ur_mem_buffer_t *dst, bool blocking, size_t srcOffset,
-    size_t dstOffset, size_t size, wait_list_view &waitListView, /*uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    size_t dstOffset, size_t size, wait_list_view &waitListView, 
     ur_event_handle_t phEvent, ur_command_t commandType) {
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pSrc = ur_cast<char *>(src->getDevicePtr(
       hDevice.get(), ur_mem_buffer_t::device_access_mode_t::read_only,
@@ -191,14 +160,12 @@ ur_result_t ur_command_list_manager::appendRegionCopyUnlocked(
     ur_rect_offset_t srcOrigin, ur_rect_offset_t dstOrigin,
     ur_rect_region_t region, size_t srcRowPitch, size_t srcSlicePitch,
     size_t dstRowPitch, size_t dstSlicePitch,
-    wait_list_view &waitListView, /* uint32_t
-numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView,
     ur_event_handle_t phEvent, ur_command_t commandType) {
   auto zeParams = ur2zeRegionParams(srcOrigin, dstOrigin, region, srcRowPitch,
                                     dstRowPitch, srcSlicePitch, dstSlicePitch);
 
   auto zeSignalEvent = getSignalEvent(phEvent, commandType);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pSrc = ur_cast<char *>(src->getDevicePtr(
       hDevice.get(), ur_mem_buffer_t::device_access_mode_t::read_only, 0,
@@ -220,28 +187,6 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
   return UR_RESULT_SUCCESS;
 }
 
-wait_list_view ur_command_list_manager::getWaitListView(
-    const ur_event_handle_t *phWaitEvents, uint32_t numWaitEvents,
-    ur_event_handle_t additionalWaitEvent) {
-
-  // uint32_t totalNumWaitEvents =
-  //     numWaitEvents + (additionalWaitEvent != nullptr ? 1 : 0);
-  // waitList.resize(totalNumWaitEvents);
-  // for (uint32_t i = 0; i < numWaitEvents; i++) {
-  //   phWaitEvents[i]->runBatch();
-  //   waitList[i] = phWaitEvents[i]->getZeEvent();
-  // }
-  // if (additionalWaitEvent != nullptr) {
-  //   waitList[totalNumWaitEvents - 1] = additionalWaitEvent->getZeEvent();
-  // }
-
-  wait_list_view waitlist = wait_list_view(phWaitEvents, numWaitEvents);
-  waitlist.addAdditionalEvent(additionalWaitEvent);
-
-  return waitlist;
-  // return {waitList.data(), static_cast<uint32_t>(totalNumWaitEvents)};
-}
-
 ze_event_handle_t
 ur_command_list_manager::getSignalEvent(ur_event_handle_t hUserEvent,
                                         ur_command_t commandType) {
@@ -256,8 +201,7 @@ ur_command_list_manager::getSignalEvent(ur_event_handle_t hUserEvent,
 ur_result_t ur_command_list_manager::appendKernelLaunchUnlocked(
     ur_kernel_handle_t hKernel, uint32_t workDim,
     const size_t *pGlobalWorkOffset, const size_t *pGlobalWorkSize,
-    const size_t *pLocalWorkSize, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    const size_t *pLocalWorkSize, wait_list_view &waitListView, 
     ur_event_handle_t phEvent, bool cooperative) {
   UR_ASSERT(hKernel, UR_RESULT_ERROR_INVALID_NULL_HANDLE);
   UR_ASSERT(hKernel->getProgramHandle(), UR_RESULT_ERROR_INVALID_NULL_POINTER);
@@ -276,7 +220,6 @@ ur_result_t ur_command_list_manager::appendKernelLaunchUnlocked(
                                         pGlobalWorkSize, pLocalWorkSize));
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_KERNEL_LAUNCH);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   UR_CALL(hKernel->prepareForSubmission(
       hContext.get(), hDevice.get(), pGlobalWorkOffset, workDim, WG[0], WG[1],
@@ -309,8 +252,6 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
     const size_t *pLocalWorkSize, uint32_t numPropsInLaunchPropList,
     const ur_kernel_launch_property_t *launchPropList,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendKernelLaunch");
 
@@ -321,7 +262,7 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
         launchPropList[propIndex].value.cooperative) {
       UR_CALL(appendKernelLaunchUnlocked(
           hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-          waitListView, /* numEventsInWaitList, phEventWaitList, */
+          waitListView,
           phEvent, true /* cooperative */));
       return UR_RESULT_SUCCESS;
     }
@@ -335,8 +276,7 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
 
   UR_CALL(appendKernelLaunchUnlocked(
       hKernel, workDim, pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-      waitListView,
-      /* numEventsInWaitList, phEventWaitList, */ phEvent,
+      waitListView, phEvent,
       false /* cooperative */));
 
   return UR_RESULT_SUCCESS;
@@ -344,16 +284,11 @@ ur_result_t ur_command_list_manager::appendKernelLaunch(
 
 ur_result_t ur_command_list_manager::appendUSMMemcpy(
     bool blocking, void *pDst, const void *pSrc, size_t size,
-    wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
-    ur_event_handle_t phEvent) {
+    wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMMemcpy");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_MEMCPY);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // auto [pWaitEvents, numWaitEvents, _] =
-  //     getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendMemoryCopy,
              (zeCommandList.get(), pDst, pSrc, size, zeSignalEvent,
@@ -369,7 +304,6 @@ ur_result_t ur_command_list_manager::appendUSMMemcpy(
 ur_result_t ur_command_list_manager::appendMemBufferFill(
     ur_mem_handle_t hMem, const void *pPattern, size_t patternSize,
     size_t offset, size_t size, wait_list_view &waitListView,
-    /*uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferFill");
 
@@ -380,7 +314,6 @@ ur_result_t ur_command_list_manager::appendMemBufferFill(
 
   return appendGenericFillUnlocked(hBuffer, offset, patternSize, pPattern, size,
                                    waitListView,
-                                   /* numEventsInWaitList,  phEventWaitList, */
                                    phEvent, UR_COMMAND_MEM_BUFFER_FILL);
 }
 
@@ -388,23 +321,18 @@ ur_result_t
 ur_command_list_manager::appendUSMFill(void *pMem, size_t patternSize,
                                        const void *pPattern, size_t size,
                                        wait_list_view &waitListView,
-                                       /* uint32_t numEventsInWaitList, const
-                                          ur_event_handle_t *phEventWaitList, */
                                        ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFill");
 
   ur_usm_handle_t dstHandle(hContext.get(), size, pMem);
   return appendGenericFillUnlocked(&dstHandle, 0, patternSize, pPattern, size,
                                    waitListView,
-                                   /* numEventsInWaitList, phEventWaitList, */
                                    phEvent, UR_COMMAND_USM_FILL);
 }
 
 ur_result_t ur_command_list_manager::appendUSMPrefetch(
     const void *pMem, size_t size, ur_usm_migration_flags_t flags,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMPrefetch");
 
@@ -422,7 +350,6 @@ ur_result_t ur_command_list_manager::appendUSMPrefetch(
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_PREFETCH);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -444,8 +371,6 @@ ur_result_t ur_command_list_manager::appendUSMPrefetch(
 ur_result_t ur_command_list_manager::appendUSMAdvise(
     const void *pMem, size_t size, ur_usm_advice_flags_t advice,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMAdvise");
 
@@ -453,7 +378,6 @@ ur_result_t ur_command_list_manager::appendUSMAdvise(
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_USM_ADVISE);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (pWaitEvents) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -472,8 +396,7 @@ ur_result_t ur_command_list_manager::appendUSMAdvise(
 
 ur_result_t ur_command_list_manager::appendMemBufferRead(
     ur_mem_handle_t hMem, bool blockingRead, size_t offset, size_t size,
-    void *pDst, wait_list_view &waitListView, /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t *phEventWaitList, */
+    void *pDst, wait_list_view &waitListView,
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferRead");
 
@@ -486,7 +409,7 @@ ur_result_t ur_command_list_manager::appendMemBufferRead(
 
   return appendGenericCopyUnlocked(
       hBuffer, &dstHandle, blockingRead, offset, 0, size,
-      waitListView, /* numEventsInWaitList, phEventWaitList, */
+      waitListView, 
       phEvent, UR_COMMAND_MEM_BUFFER_READ);
 }
 
@@ -495,8 +418,7 @@ ur_command_list_manager::appendMemBufferWrite(ur_mem_handle_t hMem,
                                               bool blockingWrite, size_t offset,
                                               size_t size, const void *pSrc,
                                               wait_list_view &waitListView,
-                                              /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+                                              ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferWrite");
 
   auto hBuffer = hMem->getBuffer();
@@ -508,8 +430,7 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
 
   return appendGenericCopyUnlocked(&srcHandle, hBuffer, blockingWrite, 0,
                                    offset, size, waitListView,
-                                   /* numEventsInWaitList,
-phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_WRITE);
+                                   phEvent, UR_COMMAND_MEM_BUFFER_WRITE);
 }
 
 ur_result_t
@@ -518,8 +439,7 @@ ur_command_list_manager::appendMemBufferCopy(ur_mem_handle_t hSrc,
                                              size_t srcOffset, size_t dstOffset,
                                              size_t size,
                                              wait_list_view &waitListView,
-                                             /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+                                              ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferCopy");
 
   auto hBufferSrc = hSrc->getBuffer();
@@ -535,17 +455,14 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
 
   return appendGenericCopyUnlocked(hBufferSrc, hBufferDst, false, srcOffset,
                                    dstOffset, size, waitListView,
-                                   /* numEventsInWaitList,
-    phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_COPY);
+                                    phEvent, UR_COMMAND_MEM_BUFFER_COPY);
 }
 
 ur_result_t ur_command_list_manager::appendMemBufferReadRect(
     ur_mem_handle_t hMem, bool blockingRead, ur_rect_offset_t bufferOrigin,
     ur_rect_offset_t hostOrigin, ur_rect_region_t region, size_t bufferRowPitch,
     size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-    void *pDst, wait_list_view &waitListView, /*uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-  */ ur_event_handle_t phEvent) {
+    void *pDst, wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferReadRect");
 
   auto hBuffer = hMem->getBuffer();
@@ -557,7 +474,7 @@ ur_result_t ur_command_list_manager::appendMemBufferReadRect(
       hBuffer, &dstHandle, blockingRead, bufferOrigin, hostOrigin, region,
       bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch,
       waitListView,
-      /* numEventsInWaitList, phEventWaitList, */ phEvent,
+      phEvent,
       UR_COMMAND_MEM_BUFFER_READ_RECT);
 }
 
@@ -565,9 +482,7 @@ ur_result_t ur_command_list_manager::appendMemBufferWriteRect(
     ur_mem_handle_t hMem, bool blockingWrite, ur_rect_offset_t bufferOrigin,
     ur_rect_offset_t hostOrigin, ur_rect_region_t region, size_t bufferRowPitch,
     size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-    void *pSrc, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-  */ ur_event_handle_t phEvent) {
+    void *pSrc, wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferWriteRect");
 
   auto hBuffer = hMem->getBuffer();
@@ -579,7 +494,7 @@ ur_result_t ur_command_list_manager::appendMemBufferWriteRect(
       &srcHandle, hBuffer, blockingWrite, hostOrigin, bufferOrigin, region,
       hostRowPitch, hostSlicePitch, bufferRowPitch, bufferSlicePitch,
       waitListView,
-      /* numEventsInWaitList, phEventWaitList, */ phEvent,
+       phEvent,
       UR_COMMAND_MEM_BUFFER_WRITE_RECT);
 }
 
@@ -588,8 +503,6 @@ ur_result_t ur_command_list_manager::appendMemBufferCopyRect(
     ur_rect_offset_t dstOrigin, ur_rect_region_t region, size_t srcRowPitch,
     size_t srcSlicePitch, size_t dstRowPitch, size_t dstSlicePitch,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferCopyRect");
 
@@ -602,15 +515,12 @@ ur_result_t ur_command_list_manager::appendMemBufferCopyRect(
   return appendRegionCopyUnlocked(hBufferSrc, hBufferDst, false, srcOrigin,
                                   dstOrigin, region, srcRowPitch, srcSlicePitch,
                                   dstRowPitch, dstSlicePitch, waitListView,
-                                  /* numEventsInWaitList,
-phEventWaitList, */ phEvent, UR_COMMAND_MEM_BUFFER_COPY_RECT);
+                                   phEvent, UR_COMMAND_MEM_BUFFER_COPY_RECT);
 }
 
 ur_result_t ur_command_list_manager::appendUSMMemcpy2D(
     bool blocking, void *pDst, size_t dstPitch, const void *pSrc,
     size_t srcPitch, size_t width, size_t height, wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMMemcpy2D");
 
@@ -623,14 +533,12 @@ const ur_event_handle_t *phEventWaitList, */
   return appendRegionCopyUnlocked(
       &srcHandle, &dstHandle, blocking, zeroOffset, zeroOffset, region,
       srcPitch, 0, dstPitch, 0, waitListView,
-      /* numEventsInWaitList, phEventWaitList, */ phEvent,
+       phEvent,
       UR_COMMAND_USM_MEMCPY_2D);
 }
 
 ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
-    bool blocking, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-  */ ur_event_handle_t phEvent) {
+    bool blocking, wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendTimestampRecordingExp");
 
   if (!phEvent) {
@@ -638,7 +546,6 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
   }
 
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   phEvent->recordStartTimestamp();
 
@@ -658,17 +565,14 @@ ur_result_t ur_command_list_manager::appendTimestampRecordingExp(
 
 ur_result_t ur_command_list_manager::appendGenericCommandListsExp(
     uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-    ur_event_handle_t phEvent, wait_list_view &waitListView, /* uint32_t
-    numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    ur_event_handle_t phEvent, wait_list_view &waitListView,
     ur_command_t callerCommand, ur_event_handle_t additionalWaitEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendGenericCommandListsExp");
 
   auto zeSignalEvent = getSignalEvent(phEvent, callerCommand);
   waitListView.addAdditionalEvent(additionalWaitEvent);
   auto [pWaitEvents, numWaitEvents, _] =
-      waitListView; // getWaitListView(
-                    // phEventWaitList, numEventsInWaitList,
-                    // additionalWaitEvent);
+      waitListView; 
 
   ZE2UR_CALL(zeCommandListImmediateAppendCommandListsExp,
              (getZeCommandList(), numCommandLists, phCommandLists,
@@ -681,8 +585,7 @@ ur_result_t
 ur_command_list_manager::appendCommandBufferExp(ur_exp_command_buffer_handle_t
                                                     hCommandBuffer,
                                                 wait_list_view &waitListView,
-                                                /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
+                                                ur_event_handle_t phEvent) {
 
   auto bufferCommandListLocked = hCommandBuffer->commandListManager.lock();
   ze_command_list_handle_t commandBufferCommandList =
@@ -699,10 +602,8 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent) {
   }
 
   UR_CALL(appendGenericCommandListsExp(1, &commandBufferCommandList, phEvent,
-                                       waitListView, /* numEventsInWaitList,
-phEventWaitList, */ UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP, nullptr));
-  // already synchronized
-  // executionEvent));
+                                       waitListView, UR_COMMAND_ENQUEUE_COMMAND_BUFFER_EXP, 
+                                       /* already synchronized */ nullptr));
   UR_CALL(hCommandBuffer->registerExecutionEventUnlocked(phEvent));
 
   return UR_RESULT_SUCCESS;
@@ -712,15 +613,12 @@ ur_result_t ur_command_list_manager::appendMemImageRead(
     ur_mem_handle_t hMem, bool blockingRead, ur_rect_offset_t origin,
     ur_rect_region_t region, size_t rowPitch, size_t slicePitch, void *pDst,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemImageRead");
 
   auto hImage = hMem->getImage();
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_READ);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto [zeImage, zeRegion] =
       hImage->getRWRegion(origin, region, rowPitch, slicePitch);
@@ -740,15 +638,12 @@ ur_result_t ur_command_list_manager::appendMemImageWrite(
     ur_mem_handle_t hMem, bool blockingWrite, ur_rect_offset_t origin,
     ur_rect_region_t region, size_t rowPitch, size_t slicePitch, void *pSrc,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemImageWrite");
 
   auto hImage = hMem->getImage();
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_WRITE);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto [zeImage, zeRegion] =
       hImage->getRWRegion(origin, region, rowPitch, slicePitch);
@@ -767,8 +662,7 @@ ur_result_t ur_command_list_manager::appendMemImageWrite(
 ur_result_t ur_command_list_manager::appendMemImageCopy(
     ur_mem_handle_t hSrc, ur_mem_handle_t hDst, ur_rect_offset_t srcOrigin,
     ur_rect_offset_t dstOrigin, ur_rect_region_t region,
-    wait_list_view &waitListView, /* uint32_t numEventsInWaitList, const
-                                     ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView, 
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemImageWrite");
 
@@ -776,7 +670,6 @@ ur_result_t ur_command_list_manager::appendMemImageCopy(
   auto hImageDst = hDst->getImage();
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_COPY);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto desc = ur_mem_image_t::getCopyRegions(*hImageSrc, *hImageDst, srcOrigin,
                                              dstOrigin, region);
@@ -798,8 +691,7 @@ ur_command_list_manager::appendMemBufferMap(ur_mem_handle_t hMem,
                                             ur_map_flags_t mapFlags,
                                             size_t offset, size_t size,
                                             wait_list_view &waitListView,
-                                            /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
+                                             ur_event_handle_t phEvent,
                                             void **ppRetMap) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemBufferMap");
 
@@ -808,7 +700,6 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
   std::scoped_lock<ur_shared_mutex> lock(hBuffer->getMutex());
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_BUFFER_MAP);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   auto pDst = ur_cast<char *>(hBuffer->mapHostPtr(
       mapFlags, offset, size, zeCommandList.get(), waitListView));
@@ -834,15 +725,13 @@ const ur_event_handle_t *phEventWaitList, */ ur_event_handle_t phEvent,
 
 ur_result_t ur_command_list_manager::appendMemUnmap(
     ur_mem_handle_t hMem, void *pMappedPtr,
-    wait_list_view &waitListView, /* uint32_t
-numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView, 
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendMemUnmap");
 
   auto hBuffer = hMem->getBuffer();
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_UNMAP);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   // TODO: currently unmapHostPtr deallocates memory immediately,
   // since the memory might be used by the user, we need to make sure
@@ -863,9 +752,6 @@ ur_result_t ur_command_list_manager::appendUSMFill2D(
     void * /*pMem*/, size_t /*pitch*/, size_t /*patternSize*/,
     const void * /*pPattern*/, size_t /*width*/, size_t /*height*/,
     wait_list_view & /* waitListView */,
-    /*
-    uint32_t numEventsInWaitList,
-    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -890,8 +776,6 @@ static void *getGlobalPointerFromModule(ze_module_handle_t hModule,
 ur_result_t ur_command_list_manager::appendDeviceGlobalVariableWrite(
     ur_program_handle_t hProgram, const char *name, bool blockingWrite,
     size_t count, size_t offset, const void *pSrc, wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY(
       "ur_command_list_manager::appendDeviceGlobalVariableWrite");
@@ -906,16 +790,14 @@ const ur_event_handle_t *phEventWaitList, */
   // Locking is done inside appendUSMMemcpy
   return appendUSMMemcpy(
       blockingWrite, ur_cast<char *>(globalVarPtr) + offset, pSrc, count,
-      waitListView, /* numEventsInWaitList, phEventWaitList, */
+      waitListView,
       phEvent);
 }
 
 ur_result_t ur_command_list_manager::appendDeviceGlobalVariableRead(
     ur_program_handle_t hProgram, const char *name, bool blockingRead,
     size_t count, size_t offset, void *pDst,
-    wait_list_view &waitListView, /* uint32_t
-numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
-    ur_event_handle_t phEvent) {
+    wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY(
       "ur_command_list_manager::appendDeviceGlobalVariableRead");
 
@@ -930,15 +812,13 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
   return appendUSMMemcpy(blockingRead, pDst,
                          ur_cast<char *>(globalVarPtr) + offset, count,
                          waitListView,
-                         /* numEventsInWaitList, phEventWaitList, */ phEvent);
+                          phEvent);
 }
 
 ur_result_t ur_command_list_manager::appendReadHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pDst*/, size_t /*size*/,
     wait_list_view & /* waitListView */,
-    /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -947,8 +827,6 @@ ur_result_t ur_command_list_manager::appendWriteHostPipe(
     ur_program_handle_t /*hProgram*/, const char * /*pipe_symbol*/,
     bool /*blocking*/, void * /*pSrc*/, size_t /*size*/,
     wait_list_view & /* waitListView */,
-    /* uint32_t numEventsInWaitList,
-    const ur_event_handle_t * phEventWaitList, */
     ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -956,8 +834,6 @@ ur_result_t ur_command_list_manager::appendWriteHostPipe(
 ur_result_t ur_command_list_manager::appendUSMAllocHelper(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t pPool, const size_t size,
     const ur_exp_async_usm_alloc_properties_t *, wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList,
-const ur_event_handle_t *phEventWaitList, */
     void **ppMem, ur_event_handle_t phEvent, ur_usm_type_t type) {
   if (!pPool) {
     pPool = hContext->getAsyncPool();
@@ -978,9 +854,6 @@ const ur_event_handle_t *phEventWaitList, */
     std::tie(*ppMem, originAllocEvent) = *asyncAlloc;
   }
 
-  // auto waitListView =
-  //     getWaitListView(phEventWaitList, numEventsInWaitList,
-  //     originAllocEvent);
   waitListView.addAdditionalEvent(originAllocEvent);
 
   ur_command_t commandType = UR_COMMAND_FORCE_UINT32;
@@ -1020,15 +893,12 @@ const ur_event_handle_t *phEventWaitList, */
 ur_result_t ur_command_list_manager::appendUSMFreeExp(
     ur_queue_t_ *Queue, ur_usm_pool_handle_t, void *pMem,
     wait_list_view &waitListView,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendUSMFreeExp");
   assert(phEvent);
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_ENQUEUE_USM_FREE_EXP);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   umf_memory_pool_handle_t hPool = nullptr;
   auto umfRet = umfPoolByPtr(pMem, &hPool);
@@ -1072,12 +942,10 @@ ur_result_t ur_command_list_manager::bindlessImagesImageCopyExp(
     const ur_image_format_t *pDstImageFormat,
     ur_exp_image_copy_region_t *pCopyRegion,
     ur_exp_image_copy_flags_t imageCopyFlags,
-    wait_list_view &waitListView, /* uint32_t
-numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
+    wait_list_view &waitListView, 
     ur_event_handle_t phEvent) {
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_MEM_IMAGE_COPY);
-  // auto waitListView = getWaitListView(phEventWaitList, numEventsInWaitList);
 
   return bindlessImagesHandleCopyFlags(
       pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
@@ -1087,25 +955,20 @@ numEventsInWaitList, const ur_event_handle_t *phEventWaitList, */
 
 ur_result_t ur_command_list_manager::bindlessImagesWaitExternalSemaphoreExp(
     ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasWaitValue*/,
-    uint64_t /*waitValue*/, wait_list_view & /* waitListView */, /* uint32_t
-     numEventsInWaitList, const ur_event_handle_t * phEventWaitList, */
-    ur_event_handle_t /*phEvent*/) {
+    uint64_t /*waitValue*/, wait_list_view & /* waitListView */, ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ur_result_t ur_command_list_manager::bindlessImagesSignalExternalSemaphoreExp(
     ur_exp_external_semaphore_handle_t /*hSemaphore*/, bool /*hasSignalValue*/,
-    uint64_t /*signalValue*/, wait_list_view & /* waitListView */, /* uint32_t
-     numEventsInWaitList, const ur_event_handle_t * phEventWaitList, */
-    ur_event_handle_t /*phEvent*/) {
+    uint64_t /*signalValue*/, wait_list_view & /* waitListView */,ur_event_handle_t /*phEvent*/) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ur_result_t ur_command_list_manager::appendNativeCommandExp(
     ur_exp_enqueue_native_command_function_t, void *, uint32_t,
     const ur_mem_handle_t *, const ur_exp_enqueue_native_command_properties_t *,
-    wait_list_view &,
-    /* uint32_t, const ur_event_handle_t *, */ ur_event_handle_t) {
+    wait_list_view &, ur_event_handle_t) {
   UR_LOG_LEGACY(
       ERR, logger::LegacyMessage("[UR][L0_v2] {} function not implemented!"),
       "{} function not implemented!", __FUNCTION__);
@@ -1124,14 +987,11 @@ ze_command_list_handle_t ur_command_list_manager::getZeCommandList() {
 }
 
 ur_result_t ur_command_list_manager::appendEventsWait(
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     wait_list_view &waitListView, ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendEventsWait");
 
   auto zeSignalEvent = getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT);
   auto [pWaitEvents, numWaitEvents, _] = waitListView;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   if (numWaitEvents > 0) {
     ZE2UR_CALL(zeCommandListAppendWaitOnEvents,
@@ -1148,15 +1008,12 @@ ur_result_t ur_command_list_manager::appendEventsWait(
 
 ur_result_t ur_command_list_manager::appendEventsWaitWithBarrier(
     wait_list_view &waitList,
-    /* uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-     */
     ur_event_handle_t phEvent) {
   TRACK_SCOPE_LATENCY("ur_command_list_manager::appendEventsWaitWithBarrier");
 
   auto zeSignalEvent =
       getSignalEvent(phEvent, UR_COMMAND_EVENTS_WAIT_WITH_BARRIER);
   auto [pWaitEvents, numWaitEvents, _] = waitList;
-  // getWaitListView(phEventWaitList, numEventsInWaitList);
 
   ZE2UR_CALL(zeCommandListAppendBarrier,
              (zeCommandList.get(), zeSignalEvent, numWaitEvents, pWaitEvents));
