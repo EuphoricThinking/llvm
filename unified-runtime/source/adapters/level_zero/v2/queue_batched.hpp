@@ -460,10 +460,10 @@ public:
                                    uint32_t numEventsInWaitList,
                                    const ur_event_handle_t *phEventWaitList,
                                    ur_event_handle_t *phEvent) override; // {
-    // return commandListManagerImmediate.lock()->appendWriteHostPipe(
-    //     hProgram, pipe_symbol, blocking, pSrc, size, numEventsInWaitList,
-    //     phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  // return commandListManagerImmediate.lock()->appendWriteHostPipe(
+  //     hProgram, pipe_symbol, blocking, pSrc, size, numEventsInWaitList,
+  //     phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
   //   return UR_RESULT_ERROR_INVALID_VALUE;
   // }
 
@@ -471,41 +471,41 @@ public:
       ur_usm_pool_handle_t pPool, const size_t size,
       const ur_exp_async_usm_alloc_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      void **ppMem, ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
-    //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-    //     ppMem,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
-    //     UR_USM_TYPE_DEVICE);
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      void **ppMem, ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
+  //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
+  //     ppMem,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+  //     UR_USM_TYPE_DEVICE);
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMSharedAllocExp(
       ur_usm_pool_handle_t pPool, const size_t size,
       const ur_exp_async_usm_alloc_properties_t *pProperties,
       uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
-      void **ppMem, ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
-    //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-    //     ppMem,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
-    //     UR_USM_TYPE_SHARED);
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      void **ppMem, ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
+  //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
+  //     ppMem,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+  //     UR_USM_TYPE_SHARED);
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t
   enqueueUSMHostAllocExp(ur_usm_pool_handle_t pPool, const size_t size,
                          const ur_exp_async_usm_alloc_properties_t *pProperties,
                          uint32_t numEventsInWaitList,
                          const ur_event_handle_t *phEventWaitList, void **ppMem,
-                         ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
-    //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
-    //     ppMem,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
-    //     UR_USM_TYPE_HOST);
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+                         ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->appendUSMAllocHelper(
+  //     this, pPool, size, pProperties, numEventsInWaitList, phEventWaitList,
+  //     ppMem,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1),
+  //     UR_USM_TYPE_HOST);
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t enqueueUSMFreeExp(ur_usm_pool_handle_t pPool, void *pMem,
                                 uint32_t numEventsInWaitList,
@@ -525,14 +525,14 @@ public:
       ur_exp_image_copy_region_t *pCopyRegion,
       ur_exp_image_copy_flags_t imageCopyFlags, uint32_t numEventsInWaitList,
       const ur_event_handle_t *phEventWaitList,
-      ur_event_handle_t *phEvent) override {
-    // return commandListManagerImmediate.lock()->bindlessImagesImageCopyExp(
-    //     pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
-    //     pDstImageFormat, pCopyRegion, imageCopyFlags, numEventsInWaitList,
-    //     phEventWaitList,
-    //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
-    return UR_RESULT_ERROR_INVALID_VALUE;
-  }
+      ur_event_handle_t *phEvent) override; // {
+  // return commandListManagerImmediate.lock()->bindlessImagesImageCopyExp(
+  //     pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
+  //     pDstImageFormat, pCopyRegion, imageCopyFlags, numEventsInWaitList,
+  //     phEventWaitList,
+  //     createEventIfRequested(eventPoolImmediate.get(), phEvent, this, -1));
+  //   return UR_RESULT_ERROR_INVALID_VALUE;
+  // }
 
   ur_result_t bindlessImagesWaitExternalSemaphoreExp(
       ur_exp_external_semaphore_handle_t hSemaphore, bool hasWaitValue,

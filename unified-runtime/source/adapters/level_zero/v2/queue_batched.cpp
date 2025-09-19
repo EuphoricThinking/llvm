@@ -808,30 +808,99 @@ ur_result_t ur_queue_batched_t::enqueueReadHostPipe(
   return UR_RESULT_SUCCESS;
 }
 
-ur_result_t ur_queue_batched_t::enqueueWriteHostPipe(ur_program_handle_t hProgram,
-                                   const char *pipe_symbol, bool blocking,
-                                   void *pSrc, size_t size,
-                                   uint32_t numEventsInWaitList,
-                                   const ur_event_handle_t *phEventWaitList,
-                                   ur_event_handle_t *phEvent) {
-wait_list_view waitListView =
+ur_result_t ur_queue_batched_t::enqueueWriteHostPipe(
+    ur_program_handle_t hProgram, const char *pipe_symbol, bool blocking,
+    void *pSrc, size_t size, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
       wait_list_view(phEventWaitList, numEventsInWaitList, this);
 
   auto lockedBatch = currentCmdLists.lock();
 
   UR_CALL(lockedBatch->getActiveBatch().appendWriteHostPipe(
-        hProgram, pipe_symbol, false, pSrc, size,
-        waitListView, createEventIfRequestedRegular(phEvent,
-                                    lockedBatch->getCurrentGeneration())) );
+      hProgram, pipe_symbol, false, pSrc, size, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration())));
 
-                                    if (blocking) {
-                                         UR_CALL(queueFinishUnlocked(lockedBatch));
- 
-                                    }
+  if (blocking) {
+    UR_CALL(queueFinishUnlocked(lockedBatch));
+  }
 
-                                    return UR_RESULT_SUCCESS;
-                                  }
+  return UR_RESULT_SUCCESS;
+}
 
+ur_result_t ur_queue_batched_t::enqueueUSMDeviceAllocExp(
+    ur_usm_pool_handle_t pPool, const size_t size,
+    const ur_exp_async_usm_alloc_properties_t *pProperties,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    void **ppMem, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendUSMAllocHelper(
+      this, pPool, size, pProperties, waitListView, ppMem,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()),
+      UR_USM_TYPE_DEVICE);
+}
+
+ur_result_t ur_queue_batched_t::enqueueUSMSharedAllocExp(
+    ur_usm_pool_handle_t pPool, const size_t size,
+    const ur_exp_async_usm_alloc_properties_t *pProperties,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    void **ppMem, ur_event_handle_t *phEvent) {
+
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendUSMAllocHelper(
+      this, pPool, size, pProperties, waitListView, ppMem,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()),
+      UR_USM_TYPE_SHARED);
+}
+
+ur_result_t ur_queue_batched_t::enqueueUSMHostAllocExp(
+    ur_usm_pool_handle_t pPool, const size_t size,
+    const ur_exp_async_usm_alloc_properties_t *pProperties,
+    uint32_t numEventsInWaitList, const ur_event_handle_t *phEventWaitList,
+    void **ppMem, ur_event_handle_t *phEvent) {
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().appendUSMAllocHelper(
+      this, pPool, size, pProperties, waitListView, ppMem,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()),
+      UR_USM_TYPE_HOST);
+}
+
+ur_result_t ur_queue_batched_t::bindlessImagesImageCopyExp(
+    const void *pSrc, void *pDst, const ur_image_desc_t *pSrcImageDesc,
+    const ur_image_desc_t *pDstImageDesc,
+    const ur_image_format_t *pSrcImageFormat,
+    const ur_image_format_t *pDstImageFormat,
+    ur_exp_image_copy_region_t *pCopyRegion,
+    ur_exp_image_copy_flags_t imageCopyFlags, uint32_t numEventsInWaitList,
+    const ur_event_handle_t *phEventWaitList, ur_event_handle_t *phEvent) {
+
+  wait_list_view waitListView =
+      wait_list_view(phEventWaitList, numEventsInWaitList, this);
+
+  auto lockedBatch = currentCmdLists.lock();
+
+  return lockedBatch->getActiveBatch().bindlessImagesImageCopyExp(
+      pSrc, pDst, pSrcImageDesc, pDstImageDesc, pSrcImageFormat,
+      pDstImageFormat, pCopyRegion, imageCopyFlags, waitListView,
+      createEventIfRequestedRegular(phEvent,
+                                    lockedBatch->getCurrentGeneration()));
+}
 //////////////
 // from in_order.cpp
 
