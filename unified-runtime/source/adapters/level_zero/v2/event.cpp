@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <optional>
 #include <ze_api.h>
 
 #include "context.hpp"
@@ -19,7 +20,7 @@
 
 #include "../ur_interface_loader.hpp"
 
-ur_event_generation_t unbatchedQueue = -1;
+// ur_event_generation_t unbatchedQueue = -1;
 
 static uint64_t adjustEndEventTimestamp(uint64_t adjustedStartTimestamp,
                                         uint64_t endTimestamp,
@@ -135,8 +136,8 @@ void ur_event_handle_t_::setCommandType(ur_command_t commandType) {
 
 void ur_event_handle_t_::runBatch() {
   // printf("generation %ld unbatched %ld\n", batchGeneration, unbatchedQueue);
-  if (batchGeneration != unbatchedQueue) {
-    hQueue->runBatchIfActive(batchGeneration);
+  if (batchGeneration) {
+    hQueue->runBatchIfActive(batchGeneration.value());
   }
 }
 
@@ -163,7 +164,7 @@ void ur_event_handle_t_::reset() {
     zeEventHostReset(getZeEvent());
   }
 
-  batchGeneration = unbatchedQueue;
+  batchGeneration = std::nullopt; // = unbatchedQueue;
 }
 
 ze_event_handle_t ur_event_handle_t_::getZeEvent() const {
@@ -207,7 +208,7 @@ ur_event_handle_t_::getEventEndTimestampAndHandle() {
 
 ur_queue_t_ *ur_event_handle_t_::getQueue() const { return hQueue; }
 
-ur_event_generation_t ur_event_handle_t_::getBatch() const {
+std::optional<ur_event_generation_t> ur_event_handle_t_::getBatch() const {
   return batchGeneration;
 }
 
