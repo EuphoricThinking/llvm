@@ -77,6 +77,7 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
   }
 
   auto zeIndex = v2::getZeIndex(pProperties);
+  printf("CREATE_ME\n");
 
   bool immediate = true;
   bool outOfOrder = false;
@@ -114,6 +115,7 @@ ur_result_t urQueueCreate(ur_context_handle_t hContext,
           v2::eventFlagsFromQueueFlags(flags), flags);
     }
   } else {
+    printf("BATCHEMLIKE\n");
     *phQueue = ur_queue_handle_t_::create<v2::ur_queue_batched_t>(
         hContext, hDevice, v2::getZeOrdinal(hDevice), v2::getZePriority(flags),
         zeIndex, v2::eventFlagsFromQueueFlags(flags), flags);

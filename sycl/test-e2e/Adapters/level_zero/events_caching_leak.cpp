@@ -4,6 +4,10 @@
 // RUN: env ZE_MAX_NUMBER_OF_EVENTS_PER_EVENT_POOL=4 %{l0_leak_check} %{run} %t.out
 // RUN: env SYCL_PI_LEVEL_ZERO_DISABLE_EVENTS_CACHING=1 ZE_MAX_NUMBER_OF_EVENTS_PER_EVENT_POOL=4 %{l0_leak_check} %{run} %t.out
 
+// RUN: env SYCL_UR_TRACE=-2 SYCL_UR_USE_LEVEL_ZERO_V2=1 SYCL_PI_LEVEL_ZERO_DISABLE_EVENTS_CACHING=1 UR_L0_V2_FORCE_BATCHED=1 ZE_MAX_NUMBER_OF_EVENTS_PER_EVENT_POOL=4 %{l0_leak_check} %{run} %t.out
+
+// RUN:  %if level_zero_v2_adapter %{ env SYCL_PI_LEVEL_ZERO_DISABLE_EVENTS_CACHING=1 UR_L0_V2_FORCE_BATCHED=1 ZE_MAX_NUMBER_OF_EVENTS_PER_EVENT_POOL=4 %{l0_leak_check} %{run} %t.out %} %else %{ true %}
+
 // Check that events and pools are not leaked when event caching is
 // enabled/disabled.
 
