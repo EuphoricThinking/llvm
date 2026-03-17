@@ -216,7 +216,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
     def select_devices_for_test(self, test):
         devices = []
-        printf("sycl devices before preprocess")
+        print("sycl devices before preprocess")
         for full_name in test.config.sycl_devices:
             features = test.config.sycl_dev_features[full_name]
             if self.getMissingRequires(features, test.requires):
@@ -278,7 +278,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                     lit.Test.UNSUPPORTED, "No supported triple to build for"
                 )
         else:
-            printf("run sth")
+            print("run sth")
             devices_for_test = self.select_devices_for_test(test)
             if not devices_for_test:
                 return lit.Test.Result(
@@ -286,11 +286,15 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 )
 
             for sycl_device in remove_level_zero_suffix(devices_for_test):
-                printf("sycl device:", sycl_device)
+                print("sycl device:", sycl_device)
                 (backend, _) = sycl_device.split(":")
+                print(backend, test.config.backend_to_target[backend])
                 build_targets.add(test.config.backend_to_target[backend])
 
         print(build_targets)
+        temp_targets = [i for i in build_targets if i != ""]
+        build_targets = temp_targets
+        print("sectarg|", build_targets)
 
         triples = set(test.config.target_to_triple[t] for t in build_targets)
         test.config.available_features = test.config.available_features.union(

@@ -1,5 +1,5 @@
 // RUN: %{build} -o %t.out
-// RUN: %{run} %t.out
+// RUN: %{run} ZE_AFFINITY_MASK=1 %t.out
 // RUN: %if level_zero %{ env SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=0 UR_L0_V2_FORCE_BATCHED=1 %{run} %t.out %}
 
 //=-queue_parallel_for_generic.cpp - SYCL queue parallel_for generic lambda-=//
