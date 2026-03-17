@@ -1,7 +1,5 @@
   // RUN: %{build} -o %t.out
-// RUN: env UR_ADAPTERS_FORCE_LOAD=%S/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 %t.out
-
-// RUN: test -f %S/../../../build/lib/libur_adapter_offload.so && env SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=0 UR_L0_V2_FORCE_BATCHED=1 %{run} %t.out || true
+// RUN: env UR_ADAPTERS_FORCE_LOAD=%S/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 ONEAPI_DEVICE_SELECTOR=level_zero:gpu %t.out
 
 
 
