@@ -1,6 +1,6 @@
   // RUN: %{build} -o %t.out
-// RUN: %{run} UR_ADAPTERS_FORCE_LOAD=%t.dir/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 %t.out
-// RUN: %if level_zero %{ env UR_ADAPTERS_FORCE_LOAD=%t.dir/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 %{run} %t.out %}
+// RUN: env UR_ADAPTERS_FORCE_LOAD=%S/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 %{run} %t.out
+
 
 
   
