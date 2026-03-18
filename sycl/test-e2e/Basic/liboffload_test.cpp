@@ -1,5 +1,5 @@
   // RUN: %{build} -o %t.out
-// RUN: env UR_ADAPTERS_FORCE_LOAD=%S/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 ONEAPI_DEVICE_SELECTOR=level_zero:gpu %t.out
+// RUN: env UR_ADAPTERS_FORCE_LOAD=%S/../../../build/lib/libur_adapter_offload.so ZE_AFFINITY_MASK=1 %t.out
 
 
 
@@ -20,6 +20,11 @@
    // queue Replacing malloc_shared with malloc_host would yield a correct
    // program that allocated device-visible memory on the host.
    int* data = sycl::malloc_shared<int>(1024, myQueue);
+
+  //  sycl::device device{sycl::default_selector_v};
+   auto device = myQueue.get_device();
+   const std::string name   = device.get_info<sycl::info::device::name>();
+   std::cout << name << std::endl;
 
 
 

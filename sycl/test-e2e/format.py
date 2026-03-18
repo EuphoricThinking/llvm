@@ -295,11 +295,15 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         temp_targets = [i for i in build_targets if i != ""]
         build_targets = temp_targets
         print("sectarg|", build_targets)
+        print("spirv-backend" in test.config.available_features)
 
         triples = set(test.config.target_to_triple[t] for t in build_targets)
         test.config.available_features = test.config.available_features.union(
             build_targets
         )
+        print("spirv-backend" in test.config.available_features)
+        test.config.available_features.add("spirv-backend")
+        print("spirv-backend" in test.config.available_features)
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
 
